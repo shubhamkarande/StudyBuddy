@@ -100,7 +100,7 @@ export type RootStackParamList = {
     Login: undefined;
     Register: undefined;
     SubjectSelection: undefined;
-    ExamDates: undefined;
+    ExamDate: undefined;
     Availability: undefined;
     PlanSummary: undefined;
     Settings: undefined;

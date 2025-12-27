@@ -2,7 +2,7 @@ import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { View, Text, ActivityIndicator } from 'react-native';
+import { View, Text, ActivityIndicator, StyleSheet } from 'react-native';
 import { useAppSelector } from '../store';
 import { RootStackParamList, MainTabParamList } from '../types';
 
@@ -20,8 +20,8 @@ import ProgressScreen from '../screens/analytics/ProgressScreen';
 import InsightsScreen from '../screens/analytics/InsightsScreen';
 import SettingsScreen from '../screens/settings/SettingsScreen';
 
-// Tab icons
-const TabIcon = ({ name, focused }: { name: string; focused: boolean }) => {
+// Tab icons component - defined outside of navigator
+const TabIconContent = ({ name, focused }: { name: string; focused: boolean }) => {
     const icons: Record<string, string> = {
         Home: '🏠',
         Focus: '⏱️',
@@ -29,8 +29,8 @@ const TabIcon = ({ name, focused }: { name: string; focused: boolean }) => {
         Insights: '💡',
     };
     return (
-        <View className={`items-center justify-center ${focused ? 'opacity-100' : 'opacity-50'}`}>
-            <Text className="text-2xl">{icons[name]}</Text>
+        <View style={[styles.tabIcon, { opacity: focused ? 1 : 0.5 }]}>
+            <Text style={styles.tabIconText}>{icons[name]}</Text>
         </View>
     );
 };
@@ -44,7 +44,7 @@ function MainTabs() {
         <Tab.Navigator
             screenOptions={({ route }) => ({
                 headerShown: false,
-                tabBarIcon: ({ focused }) => <TabIcon name={route.name} focused={focused} />,
+                tabBarIcon: ({ focused }) => <TabIconContent name={route.name} focused={focused} />,
                 tabBarActiveTintColor: '#4f46e5',
                 tabBarInactiveTintColor: '#64748b',
                 tabBarStyle: {
@@ -70,22 +70,12 @@ function MainTabs() {
     );
 }
 
-// Auth stack navigator
-function AuthStack() {
-    return (
-        <Stack.Navigator screenOptions={{ headerShown: false }}>
-            <Stack.Screen name="Login" component={LoginScreen} />
-            <Stack.Screen name="Register" component={RegisterScreen} />
-        </Stack.Navigator>
-    );
-}
-
 // Onboarding stack navigator
 function OnboardingStack() {
     return (
         <Stack.Navigator screenOptions={{ headerShown: false }}>
             <Stack.Screen name="SubjectSelection" component={SubjectSelectionScreen} />
-            <Stack.Screen name="ExamDates" component={ExamDateScreen} />
+            <Stack.Screen name="ExamDate" component={ExamDateScreen} />
             <Stack.Screen name="Availability" component={AvailabilityScreen} />
             <Stack.Screen name="PlanSummary" component={PlanSummaryScreen} />
         </Stack.Navigator>
@@ -94,13 +84,17 @@ function OnboardingStack() {
 
 // Root navigator
 export default function RootNavigator() {
-    const { isAuthenticated, isLoading, user } = useAppSelector(state => state.auth);
+    const { isAuthenticated, isLoading } = useAppSelector(state => state.auth);
+    const { step: onboardingStep } = useAppSelector(state => state.onboarding);
+
+    // Onboarding is complete when step reaches 5
+    const onboardingComplete = onboardingStep >= 5;
 
     if (isLoading) {
         return (
-            <View className="flex-1 items-center justify-center bg-dark-900">
+            <View style={styles.loadingContainer}>
                 <ActivityIndicator size="large" color="#4f46e5" />
-                <Text className="mt-4 text-white text-lg">Loading...</Text>
+                <Text style={styles.loadingText}>Loading...</Text>
             </View>
         );
     }
@@ -114,7 +108,7 @@ export default function RootNavigator() {
                         <Stack.Screen name="Login" component={LoginScreen} />
                         <Stack.Screen name="Register" component={RegisterScreen} />
                     </>
-                ) : !user?.onboardingComplete ? (
+                ) : !onboardingComplete ? (
                     <Stack.Screen name="Onboarding" component={OnboardingStack} />
                 ) : (
                     <>
@@ -126,3 +120,24 @@ export default function RootNavigator() {
         </NavigationContainer>
     );
 }
+
+const styles = StyleSheet.create({
+    tabIcon: {
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    tabIconText: {
+        fontSize: 24,
+    },
+    loadingContainer: {
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: '#0f172a',
+    },
+    loadingText: {
+        marginTop: 16,
+        color: '#ffffff',
+        fontSize: 18,
+    },
+});

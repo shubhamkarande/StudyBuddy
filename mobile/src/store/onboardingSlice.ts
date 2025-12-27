@@ -42,6 +42,9 @@ const onboardingSlice = createSlice({
         setStudyStyle: (state, action: PayloadAction<'pomodoro' | 'deep_work' | 'mixed'>) => {
             state.studyStyle = action.payload;
         },
+        completeOnboarding: (state) => {
+            state.step = 5; // Mark as completed
+        },
         resetOnboarding: () => initialState,
     },
 });
@@ -55,6 +58,7 @@ export const {
     setExamDate,
     setDailyHours,
     setStudyStyle,
+    completeOnboarding,
     resetOnboarding,
 } = onboardingSlice.actions;
 
