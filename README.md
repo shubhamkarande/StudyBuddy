@@ -18,16 +18,16 @@ An AI-assisted study planning mobile app that helps students create personalized
 ### Mobile App
 
 - **React Native CLI** + TypeScript
-- **NativeWind** (Tailwind CSS for React Native)
+- **React Native StyleSheet** for styling
 - **Redux Toolkit** for state management
-- **React Navigation** for routing
-- **Firebase** for auth and data
+- **React Navigation** (Stack + Bottom Tabs)
+- **Firebase** for authentication
 
 ### Backend
 
 - **Fastify** + TypeScript
 - **Firebase Admin SDK**
-- **Optional OpenAI** integration
+- **Optional OpenAI** integration for AI insights
 
 ## 📁 Project Structure
 
@@ -35,7 +35,7 @@ An AI-assisted study planning mobile app that helps students create personalized
 StudyBuddy/
 ├── mobile/                 # React Native app
 │   ├── src/
-│   │   ├── screens/       # App screens
+│   │   ├── screens/       # App screens (auth, onboarding, main)
 │   │   ├── store/         # Redux slices
 │   │   ├── services/      # API & Firebase
 │   │   ├── navigation/    # Navigation config
@@ -55,7 +55,14 @@ StudyBuddy/
 - Node.js >= 20
 - pnpm
 - Android Studio (for Android)
-- Xcode (for iOS)
+- Xcode (for iOS, macOS only)
+
+### Firebase Setup
+
+1. Create a project at [Firebase Console](https://console.firebase.google.com)
+2. Enable **Email/Password** authentication
+3. Download `google-services.json` (Android) → place in `mobile/android/app/`
+4. Download `GoogleService-Info.plist` (iOS) → place in `mobile/ios/`
 
 ### Backend Setup
 
@@ -96,22 +103,25 @@ OPENAI_API_KEY=sk-your-key (optional)
 
 ### Mobile
 
-Firebase configuration is automatically handled by:
+Firebase configuration files (not committed for security):
 
 - `android/app/google-services.json` (Android)
 - `ios/GoogleService-Info.plist` (iOS)
 
 ## 📱 Screens
 
-1. **Welcome** - Onboarding entry point
-2. **Subject Selection** - Choose your study subjects
-3. **Exam Date** - Set your exam deadline
-4. **Availability** - Configure daily study hours
-5. **Plan Summary** - Review and generate plan
-6. **Home** - Daily schedule and quick actions
-7. **Focus** - Pomodoro timer
-8. **Progress** - Stats and streaks
-9. **Insights** - AI recommendations
+| Screen | Description |
+|--------|-------------|
+| **Welcome** | Onboarding entry point |
+| **Subject Selection** | Choose your study subjects |
+| **Exam Date** | Set your exam deadline |
+| **Availability** | Configure daily study hours |
+| **Plan Summary** | Review and generate plan |
+| **Home** | Daily schedule and quick actions |
+| **Focus** | Pomodoro timer |
+| **Progress** | Stats and streaks |
+| **Insights** | AI recommendations |
+| **Settings** | Profile and preferences |
 
 ## 🔌 API Endpoints
 
@@ -123,6 +133,10 @@ Firebase configuration is automatically handled by:
 | GET | `/stats/weekly` | Weekly statistics |
 | GET | `/stats/subjects` | Subject breakdown |
 
+## 📸 Screenshots
+
+*Coming soon*
+
 ## 📄 License
 
 MIT License - see [LICENSE](LICENSE) file
@@ -130,5 +144,5 @@ MIT License - see [LICENSE](LICENSE) file
 ## 🙏 Acknowledgments
 
 - Built with React Native & Fastify
-- Styled with NativeWind
-- Powered by Firebase
+- Powered by Firebase Authentication
+- AI insights powered by OpenAI (optional)

@@ -1,26 +1,31 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, StatusBar, Animated } from 'react-native';
 import { useAppSelector, useAppDispatch } from '../../store';
-import { startTimer, pauseTimer, resetTimer, tick, setSessionMinutes } from '../../store/focusSlice';
+import { startFocus, pauseFocus, resumeFocus, endFocus, tick } from '../../store/focusSlice';
+import { FocusSession } from '../../types';
 
 export default function FocusScreen() {
     const dispatch = useAppDispatch();
-    const { isRunning, isPaused, timeRemaining, sessionMinutes } = useAppSelector((state) => state.focus);
+    const { isActive, isPaused, elapsedSeconds } = useAppSelector((state) => state.focus);
     const [selectedSubject, setSelectedSubject] = useState('Mathematics');
+    const [sessionMinutes, setSessionMinutes] = useState(25);
     const pulseAnim = useRef(new Animated.Value(1)).current;
+
+    const totalSeconds = sessionMinutes * 60;
+    const timeRemaining = Math.max(0, totalSeconds - elapsedSeconds);
 
     useEffect(() => {
         let interval: ReturnType<typeof setInterval>;
-        if (isRunning && !isPaused && timeRemaining > 0) {
+        if (isActive && !isPaused && timeRemaining > 0) {
             interval = setInterval(() => {
                 dispatch(tick());
             }, 1000);
         }
         return () => clearInterval(interval);
-    }, [isRunning, isPaused, timeRemaining, dispatch]);
+    }, [isActive, isPaused, timeRemaining, dispatch]);
 
     useEffect(() => {
-        if (isRunning && !isPaused) {
+        if (isActive && !isPaused) {
             Animated.loop(
                 Animated.sequence([
                     Animated.timing(pulseAnim, { toValue: 1.05, duration: 1000, useNativeDriver: true }),
@@ -30,7 +35,14 @@ export default function FocusScreen() {
         } else {
             pulseAnim.setValue(1);
         }
-    }, [isRunning, isPaused]);
+    }, [isActive, isPaused]);
+
+    // Auto-end when timer reaches zero
+    useEffect(() => {
+        if (isActive && timeRemaining === 0) {
+            dispatch(endFocus({ completed: true }));
+        }
+    }, [isActive, timeRemaining, dispatch]);
 
     const formatTime = (seconds: number) => {
         const mins = Math.floor(seconds / 60);
@@ -38,7 +50,30 @@ export default function FocusScreen() {
         return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
     };
 
-    const progress = 1 - (timeRemaining / (sessionMinutes * 60));
+    const handleStart = () => {
+        const session: FocusSession = {
+            id: Date.now().toString(),
+            subject: selectedSubject,
+            plannedMinutes: sessionMinutes,
+            startTime: new Date().toISOString(),
+            isCompleted: false,
+            isPaused: false,
+            elapsedSeconds: 0,
+        };
+        dispatch(startFocus(session));
+    };
+
+    const handlePauseResume = () => {
+        if (isPaused) {
+            dispatch(resumeFocus());
+        } else {
+            dispatch(pauseFocus());
+        }
+    };
+
+    const handleReset = () => {
+        dispatch(endFocus({ completed: false }));
+    };
 
     const subjects = ['Mathematics', 'Physics', 'Chemistry', 'Biology'];
     const durations = [15, 25, 45, 60];
@@ -65,7 +100,7 @@ export default function FocusScreen() {
                                     styles.subjectPill,
                                     selectedSubject === subject && styles.subjectPillActive
                                 ]}
-                                onPress={() => setSelectedSubject(subject)}
+                                onPress={() => !isActive && setSelectedSubject(subject)}
                             >
                                 <Text style={[
                                     styles.subjectText,
@@ -82,7 +117,7 @@ export default function FocusScreen() {
                         <View style={styles.timerInner}>
                             <Text style={styles.timerText}>{formatTime(timeRemaining)}</Text>
                             <Text style={styles.timerLabel}>
-                                {isRunning ? (isPaused ? 'Paused' : 'Focus Time') : 'Ready'}
+                                {isActive ? (isPaused ? 'Paused' : 'Focus Time') : 'Ready'}
                             </Text>
                         </View>
                     </View>
@@ -99,8 +134,8 @@ export default function FocusScreen() {
                                     styles.durationButton,
                                     sessionMinutes === dur && styles.durationButtonActive
                                 ]}
-                                onPress={() => dispatch(setSessionMinutes(dur))}
-                                disabled={isRunning}
+                                onPress={() => !isActive && setSessionMinutes(dur)}
+                                disabled={isActive}
                             >
                                 <Text style={[
                                     styles.durationText,
@@ -113,10 +148,10 @@ export default function FocusScreen() {
 
                 {/* Controls */}
                 <View style={styles.controls}>
-                    {!isRunning ? (
+                    {!isActive ? (
                         <TouchableOpacity
                             style={styles.startButton}
-                            onPress={() => dispatch(startTimer())}
+                            onPress={handleStart}
                         >
                             <Text style={styles.startButtonText}>▶ Start Focus</Text>
                         </TouchableOpacity>
@@ -124,7 +159,7 @@ export default function FocusScreen() {
                         <View style={styles.controlRow}>
                             <TouchableOpacity
                                 style={styles.pauseButton}
-                                onPress={() => dispatch(pauseTimer())}
+                                onPress={handlePauseResume}
                             >
                                 <Text style={styles.pauseButtonText}>
                                     {isPaused ? '▶ Resume' : '⏸ Pause'}
@@ -132,7 +167,7 @@ export default function FocusScreen() {
                             </TouchableOpacity>
                             <TouchableOpacity
                                 style={styles.resetButton}
-                                onPress={() => dispatch(resetTimer())}
+                                onPress={handleReset}
                             >
                                 <Text style={styles.resetButtonText}>↻ Reset</Text>
                             </TouchableOpacity>
