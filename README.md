@@ -1,194 +1,134 @@
-# StudyBuddy - Focus. Plan. Succeed.
+# StudyBuddy 📚
 
-A cross-platform mobile app built with React Native and Expo that helps students generate AI-based study plans, enter deep focus mode, and track productivity streaks.
+**Focus. Plan. Succeed.**
 
-## Features
+An AI-assisted study planning mobile app that helps students create personalized study schedules, maintain focus, and build consistency through streaks and analytics.
 
-### 🤖 AI-Generated Study Plans
-- Input subject, exam date, and daily study hours
-- AI breaks down syllabus into manageable daily tasks
-- Weekly adaptations based on progress
+## 🚀 Features
 
-### ⏰ Focus Mode
-- Pomodoro Timer (25 minutes)
-- Deep Focus (52 minutes)
-- Custom duration sessions
-- Full-screen distraction-free interface
-- Session completion tracking
+- **📅 AI-Generated Study Plans** - Smart scheduling based on your subjects, availability, and exam dates
+- **⏱️ Focus Mode** - Pomodoro-style timer with distraction-free interface
+- **🔥 Streak Tracking** - Build consistency with daily study streaks
+- **📊 Analytics Dashboard** - Track your progress with visual insights
+- **💡 AI Insights** - Weekly summaries with personalized recommendations
+- **🔐 Secure Authentication** - Firebase-powered user authentication
 
-### 🔥 Streak & Progress Tracking
-- Daily session completion maintains streaks
-- Visual progress bars and analytics
-- Weekly reports with focus time and consistency metrics
-- Achievement badges and motivational elements
+## 🛠️ Tech Stack
 
-### 📅 Task Management
-- Daily task lists synced with AI-generated plans
-- Manual task completion tracking
-- Progress visualization
+### Mobile App
 
-### 📊 Analytics & Insights
-- Time spent per subject/topic
-- Focus efficiency scoring
-- Weekly and monthly progress charts
-- Streak maintenance statistics
+- **React Native CLI** + TypeScript
+- **NativeWind** (Tailwind CSS for React Native)
+- **Redux Toolkit** for state management
+- **React Navigation** for routing
+- **Firebase** for auth and data
 
-### 🔐 User Authentication
-- Firebase Authentication (Email/Password)
-- Guest mode with local data storage
-- Data synchronization across devices
+### Backend
 
-## Tech Stack
+- **Fastify** + TypeScript
+- **Firebase Admin SDK**
+- **Optional OpenAI** integration
 
-- **Frontend**: React Native with Expo
-- **State Management**: Redux Toolkit
-- **Styling**: NativeWind (Tailwind CSS for React Native)
-- **Backend**: Firebase Firestore
-- **Authentication**: Firebase Auth
-- **Charts**: Victory Native
-- **Navigation**: Expo Router
+## 📁 Project Structure
 
-## Getting Started
+```
+StudyBuddy/
+├── mobile/                 # React Native app
+│   ├── src/
+│   │   ├── screens/       # App screens
+│   │   ├── store/         # Redux slices
+│   │   ├── services/      # API & Firebase
+│   │   ├── navigation/    # Navigation config
+│   │   └── types/         # TypeScript types
+│   └── App.tsx
+├── backend/               # Fastify API
+│   └── src/
+│       ├── routes/        # API routes
+│       └── services/      # Business logic
+└── README.md
+```
+
+## 🚀 Getting Started
 
 ### Prerequisites
 
-- Node.js (v16 or higher)
-- npm or yarn
-- Expo CLI
-- Firebase project
-- OpenAI API key (optional, for AI features)
+- Node.js >= 20
+- pnpm
+- Android Studio (for Android)
+- Xcode (for iOS)
 
-### Installation
+### Backend Setup
 
-1. Clone the repository:
 ```bash
-git clone <repository-url>
-cd studybuddy
-```
+cd backend
+pnpm install
 
-2. Install dependencies:
-```bash
-npm install
-```
-
-3. Set up environment variables:
-```bash
+# Create .env file
 cp .env.example .env
-```
-Edit `.env` with your Firebase and OpenAI configurations.
 
-4. Start the development server:
-```bash
-npm start
+# Start development server
+pnpm dev
 ```
 
-5. Run on your device:
+### Mobile App Setup
+
 ```bash
-# iOS
-npm run ios
+cd mobile
+pnpm install
 
 # Android
-npm run android
+pnpm android
 
-# Web
-npm run web
+# iOS (macOS only)
+cd ios && pod install && cd ..
+pnpm ios
 ```
 
-### Firebase Setup
+## 🔧 Environment Variables
 
-1. Create a new Firebase project at [Firebase Console](https://console.firebase.google.com)
-2. Enable Authentication with Email/Password provider
-3. Create a Firestore database
-4. Add your web app configuration to `.env`
-
-### Project Structure
+### Backend (.env)
 
 ```
-app/
-├── (tabs)/           # Main tab navigation screens
-│   ├── index.tsx     # Home screen
-│   ├── plan.tsx      # Study plan management
-│   ├── focus.tsx     # Focus mode selection
-│   ├── streak.tsx    # Progress and analytics
-│   └── settings.tsx  # App settings
-├── auth/             # Authentication screens
-│   ├── index.tsx     # Auth landing
-│   ├── login.tsx     # Sign in
-│   └── register.tsx  # Sign up
-├── focus.tsx         # Full-screen focus mode
-├── index.tsx         # App entry point
-└── _layout.tsx       # Root layout
-
-store/
-├── index.ts          # Redux store configuration
-└── slices/           # Redux slices
-    ├── authSlice.ts      # Authentication state
-    ├── studyPlanSlice.ts # Study plans and tasks
-    ├── focusSlice.ts     # Focus sessions and timer
-    └── streakSlice.ts    # Progress tracking
-
-lib/
-└── firebase.ts       # Firebase configuration
+PORT=3001
+FIREBASE_PROJECT_ID=your-project-id
+OPENAI_API_KEY=sk-your-key (optional)
 ```
 
-## Key Features Implementation
+### Mobile
 
-### Focus Timer
-- Redux-based timer state management
-- Background timer continuation
-- Session completion tracking
-- Multiple focus modes (Pomodoro, Deep Focus, Custom)
+Firebase configuration is automatically handled by:
 
-### Study Plan Generation
-- Mock AI implementation (replace with OpenAI integration)
-- Task breakdown by date and duration
-- Progress tracking and completion status
+- `android/app/google-services.json` (Android)
+- `ios/GoogleService-Info.plist` (iOS)
 
-### Streak System
-- Daily session completion tracking
-- Streak maintenance logic
-- Progress visualization with charts
+## 📱 Screens
 
-### Data Persistence
-- Firebase Firestore for authenticated users
-- Local storage for guest mode
-- Automatic data synchronization
+1. **Welcome** - Onboarding entry point
+2. **Subject Selection** - Choose your study subjects
+3. **Exam Date** - Set your exam deadline
+4. **Availability** - Configure daily study hours
+5. **Plan Summary** - Review and generate plan
+6. **Home** - Daily schedule and quick actions
+7. **Focus** - Pomodoro timer
+8. **Progress** - Stats and streaks
+9. **Insights** - AI recommendations
 
-## Deployment
+## 🔌 API Endpoints
 
-### Mobile App Deployment
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/health` | Health check |
+| POST | `/plan/generate` | Generate study plan |
+| POST | `/plan/update` | Update session |
+| GET | `/stats/weekly` | Weekly statistics |
+| GET | `/stats/subjects` | Subject breakdown |
 
-1. Build for production:
-```bash
-# iOS
-eas build -p ios
+## 📄 License
 
-# Android
-eas build -p android
-```
+MIT License - see [LICENSE](LICENSE) file
 
-2. Submit to app stores using EAS Submit
+## 🙏 Acknowledgments
 
-### Backend Services (Optional)
-
-For AI features, deploy serverless functions to Google Cloud Functions or similar platforms to handle OpenAI API calls securely.
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
-
-## License
-
-This project is licensed under the MIT License.
-
-## Support
-
-For support and questions, please open an issue in the repository or contact the development team.
-
----
-
-**StudyBuddy** - Helping students focus, plan, and succeed in their academic journey! 🎓
+- Built with React Native & Fastify
+- Styled with NativeWind
+- Powered by Firebase
