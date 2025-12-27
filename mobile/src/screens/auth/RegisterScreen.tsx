@@ -9,8 +9,9 @@ import {
     ActivityIndicator,
     KeyboardAvoidingView,
     Platform,
-    ScrollView,
     Alert,
+    StyleSheet,
+    ScrollView,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -62,7 +63,7 @@ export default function RegisterScreen() {
             } else if (error.code === 'auth/invalid-email') {
                 errorMessage = 'Invalid email address.';
             } else if (error.code === 'auth/weak-password') {
-                errorMessage = 'Password is too weak. Use at least 6 characters.';
+                errorMessage = 'Password is too weak.';
             }
 
             Alert.alert('Registration Failed', errorMessage);
@@ -73,145 +74,230 @@ export default function RegisterScreen() {
         }
     };
 
-    const isFormValid = name && email && password && confirmPassword && password === confirmPassword;
-
     return (
-        <SafeAreaView className="flex-1 bg-dark-900">
+        <SafeAreaView style={styles.container}>
             <StatusBar barStyle="light-content" backgroundColor="#0f172a" />
 
             <KeyboardAvoidingView
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                className="flex-1"
+                style={styles.flex1}
             >
-                {/* Header */}
-                <View className="px-6 pt-4">
-                    <TouchableOpacity
-                        onPress={() => navigation.goBack()}
-                        className="p-2 -ml-2 w-12"
-                    >
-                        <Text className="text-white text-2xl">←</Text>
-                    </TouchableOpacity>
-                </View>
-
-                <ScrollView className="flex-1 px-6" showsVerticalScrollIndicator={false}>
-                    {/* Title */}
-                    <View className="items-center mb-8 mt-4">
-                        <Text className="text-5xl mb-4">🚀</Text>
-                        <Text className="text-white text-3xl font-bold mb-2">
-                            Create Account
-                        </Text>
-                        <Text className="text-dark-400 text-center">
-                            Start your journey to academic success
-                        </Text>
+                <ScrollView contentContainerStyle={styles.scrollContent}>
+                    {/* Header */}
+                    <View style={styles.header}>
+                        <TouchableOpacity
+                            onPress={() => navigation.goBack()}
+                            style={styles.backButton}
+                        >
+                            <Text style={styles.backText}>←</Text>
+                        </TouchableOpacity>
                     </View>
 
-                    {/* Form */}
-                    <View className="mb-4">
-                        <Text className="text-dark-300 text-sm font-medium mb-2">Full Name</Text>
-                        <View className="bg-dark-800 rounded-xl flex-row items-center px-4">
-                            <Text className="text-dark-400 mr-3">👤</Text>
-                            <TextInput
-                                className="flex-1 py-4 text-white text-base"
-                                placeholder="Your name"
-                                placeholderTextColor="#64748b"
-                                value={name}
-                                onChangeText={setName}
-                                autoComplete="name"
-                            />
+                    <View style={styles.content}>
+                        {/* Title */}
+                        <View style={styles.titleContainer}>
+                            <Text style={styles.emoji}>🎓</Text>
+                            <Text style={styles.title}>Create Account</Text>
+                            <Text style={styles.subtitle}>Start your personalized study journey</Text>
                         </View>
-                    </View>
 
-                    <View className="mb-4">
-                        <Text className="text-dark-300 text-sm font-medium mb-2">Email</Text>
-                        <View className="bg-dark-800 rounded-xl flex-row items-center px-4">
-                            <Text className="text-dark-400 mr-3">✉️</Text>
-                            <TextInput
-                                className="flex-1 py-4 text-white text-base"
-                                placeholder="your@email.com"
-                                placeholderTextColor="#64748b"
-                                value={email}
-                                onChangeText={setEmail}
-                                keyboardType="email-address"
-                                autoCapitalize="none"
-                                autoComplete="email"
-                            />
+                        {/* Form */}
+                        <View style={styles.form}>
+                            <View style={styles.inputContainer}>
+                                <Text style={styles.label}>Full Name</Text>
+                                <TextInput
+                                    style={styles.input}
+                                    placeholder="Enter your name"
+                                    placeholderTextColor="#64748b"
+                                    value={name}
+                                    onChangeText={setName}
+                                    autoCapitalize="words"
+                                />
+                            </View>
+
+                            <View style={styles.inputContainer}>
+                                <Text style={styles.label}>Email</Text>
+                                <TextInput
+                                    style={styles.input}
+                                    placeholder="Enter your email"
+                                    placeholderTextColor="#64748b"
+                                    value={email}
+                                    onChangeText={setEmail}
+                                    keyboardType="email-address"
+                                    autoCapitalize="none"
+                                />
+                            </View>
+
+                            <View style={styles.inputContainer}>
+                                <Text style={styles.label}>Password</Text>
+                                <View style={styles.passwordContainer}>
+                                    <TextInput
+                                        style={styles.passwordInput}
+                                        placeholder="Create a password"
+                                        placeholderTextColor="#64748b"
+                                        value={password}
+                                        onChangeText={setPassword}
+                                        secureTextEntry={!showPassword}
+                                    />
+                                    <TouchableOpacity
+                                        onPress={() => setShowPassword(!showPassword)}
+                                        style={styles.eyeButton}
+                                    >
+                                        <Text style={styles.eyeText}>{showPassword ? '👁' : '👁‍🗨'}</Text>
+                                    </TouchableOpacity>
+                                </View>
+                            </View>
+
+                            <View style={styles.inputContainer}>
+                                <Text style={styles.label}>Confirm Password</Text>
+                                <TextInput
+                                    style={styles.input}
+                                    placeholder="Confirm your password"
+                                    placeholderTextColor="#64748b"
+                                    value={confirmPassword}
+                                    onChangeText={setConfirmPassword}
+                                    secureTextEntry={!showPassword}
+                                />
+                            </View>
+
+                            <TouchableOpacity
+                                style={[styles.registerButton, isLoading && styles.disabledButton]}
+                                onPress={handleRegister}
+                                disabled={isLoading}
+                            >
+                                {isLoading ? (
+                                    <ActivityIndicator color="#0f172a" />
+                                ) : (
+                                    <Text style={styles.registerButtonText}>Create Account</Text>
+                                )}
+                            </TouchableOpacity>
                         </View>
-                    </View>
 
-                    <View className="mb-4">
-                        <Text className="text-dark-300 text-sm font-medium mb-2">Password</Text>
-                        <View className="bg-dark-800 rounded-xl flex-row items-center px-4">
-                            <Text className="text-dark-400 mr-3">🔒</Text>
-                            <TextInput
-                                className="flex-1 py-4 text-white text-base"
-                                placeholder="At least 6 characters"
-                                placeholderTextColor="#64748b"
-                                value={password}
-                                onChangeText={setPassword}
-                                secureTextEntry={!showPassword}
-                                autoComplete="new-password"
-                            />
-                            <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-                                <Text className="text-dark-400">{showPassword ? '👁️' : '👁️‍🗨️'}</Text>
+                        {/* Login Link */}
+                        <View style={styles.loginContainer}>
+                            <Text style={styles.loginText}>Already have an account? </Text>
+                            <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+                                <Text style={styles.loginLink}>Sign In</Text>
                             </TouchableOpacity>
                         </View>
                     </View>
-
-                    <View className="mb-8">
-                        <Text className="text-dark-300 text-sm font-medium mb-2">Confirm Password</Text>
-                        <View className="bg-dark-800 rounded-xl flex-row items-center px-4">
-                            <Text className="text-dark-400 mr-3">🔒</Text>
-                            <TextInput
-                                className="flex-1 py-4 text-white text-base"
-                                placeholder="Confirm your password"
-                                placeholderTextColor="#64748b"
-                                value={confirmPassword}
-                                onChangeText={setConfirmPassword}
-                                secureTextEntry={!showPassword}
-                                autoComplete="new-password"
-                            />
-                        </View>
-                        {password && confirmPassword && password !== confirmPassword && (
-                            <Text className="text-red-500 text-sm mt-2">Passwords do not match</Text>
-                        )}
-                    </View>
-
-                    {/* Register button */}
-                    <TouchableOpacity
-                        className={`rounded-2xl py-4 items-center mb-4 ${isFormValid ? 'bg-primary-600' : 'bg-dark-700'
-                            }`}
-                        onPress={handleRegister}
-                        disabled={isLoading || !isFormValid}
-                        activeOpacity={0.8}
-                    >
-                        {isLoading ? (
-                            <ActivityIndicator color="white" />
-                        ) : (
-                            <Text className={`text-lg font-semibold ${isFormValid ? 'text-white' : 'text-dark-400'}`}>
-                                Create Account
-                            </Text>
-                        )}
-                    </TouchableOpacity>
-
-                    {/* Terms text */}
-                    <Text className="text-dark-500 text-center text-sm mb-8">
-                        By signing up, you agree to our{' '}
-                        <Text className="text-primary-500">Terms of Service</Text>
-                        {' '}and{' '}
-                        <Text className="text-primary-500">Privacy Policy</Text>
-                    </Text>
                 </ScrollView>
-
-                {/* Login link */}
-                <View className="px-6 pb-8">
-                    <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-                        <Text className="text-dark-400 text-center">
-                            Already have an account?{' '}
-                            <Text className="text-white font-semibold">Log in</Text>
-                        </Text>
-                    </TouchableOpacity>
-                </View>
             </KeyboardAvoidingView>
         </SafeAreaView>
     );
 }
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        backgroundColor: '#0f172a',
+    },
+    flex1: {
+        flex: 1,
+    },
+    scrollContent: {
+        flexGrow: 1,
+    },
+    header: {
+        paddingHorizontal: 24,
+        paddingTop: 16,
+    },
+    backButton: {
+        padding: 8,
+        marginLeft: -8,
+        width: 48,
+    },
+    backText: {
+        color: '#ffffff',
+        fontSize: 24,
+    },
+    content: {
+        flex: 1,
+        paddingHorizontal: 24,
+        justifyContent: 'center',
+        paddingBottom: 40,
+    },
+    titleContainer: {
+        alignItems: 'center',
+        marginBottom: 32,
+    },
+    emoji: {
+        fontSize: 64,
+        marginBottom: 16,
+    },
+    title: {
+        fontSize: 28,
+        fontWeight: 'bold',
+        color: '#ffffff',
+        marginBottom: 8,
+    },
+    subtitle: {
+        fontSize: 16,
+        color: '#94a3b8',
+        textAlign: 'center',
+    },
+    form: {
+        marginBottom: 24,
+    },
+    inputContainer: {
+        marginBottom: 16,
+    },
+    label: {
+        color: '#94a3b8',
+        fontSize: 14,
+        marginBottom: 8,
+    },
+    input: {
+        backgroundColor: '#1e293b',
+        borderRadius: 12,
+        paddingHorizontal: 16,
+        paddingVertical: 14,
+        color: '#ffffff',
+        fontSize: 16,
+    },
+    passwordContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#1e293b',
+        borderRadius: 12,
+    },
+    passwordInput: {
+        flex: 1,
+        paddingHorizontal: 16,
+        paddingVertical: 14,
+        color: '#ffffff',
+        fontSize: 16,
+    },
+    eyeButton: {
+        padding: 14,
+    },
+    eyeText: {
+        fontSize: 20,
+    },
+    registerButton: {
+        backgroundColor: '#4ade80',
+        borderRadius: 12,
+        paddingVertical: 16,
+        alignItems: 'center',
+        marginTop: 8,
+    },
+    disabledButton: {
+        opacity: 0.7,
+    },
+    registerButtonText: {
+        color: '#0f172a',
+        fontSize: 18,
+        fontWeight: 'bold',
+    },
+    loginContainer: {
+        flexDirection: 'row',
+        justifyContent: 'center',
+    },
+    loginText: {
+        color: '#94a3b8',
+    },
+    loginLink: {
+        color: '#4ade80',
+        fontWeight: 'bold',
+    },
+});

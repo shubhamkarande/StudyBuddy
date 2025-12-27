@@ -1,227 +1,300 @@
 import React from 'react';
-import {
-    View,
-    Text,
-    ScrollView,
-    TouchableOpacity,
-    StatusBar,
-    SafeAreaView,
-} from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import { useAppSelector } from '../../store';
-
-// Bar chart component for weekly focus
-const WeeklyBarChart = ({ data }: { data: { day: string; hours: number; isToday?: boolean }[] }) => {
-    const maxHours = Math.max(...data.map(d => d.hours), 4);
-
-    return (
-        <View className="bg-dark-800 rounded-2xl p-4">
-            <View className="flex-row justify-between items-end h-32">
-                {data.map((item, index) => {
-                    const heightPercent = item.hours > 0 ? (item.hours / maxHours) * 100 : 5;
-                    return (
-                        <View key={index} className="items-center flex-1">
-                            <View
-                                className={`w-5 rounded-t-sm ${item.isToday ? 'bg-blue-500' : 'bg-dark-600'}`}
-                                style={{ height: `${heightPercent}%`, minHeight: 4 }}
-                            />
-                        </View>
-                    );
-                })}
-            </View>
-            <View className="flex-row justify-between mt-3">
-                {data.map((item, index) => (
-                    <View key={index} className="items-center flex-1">
-                        <Text className={`text-xs ${item.isToday ? 'text-white font-semibold' : 'text-dark-400'}`}>
-                            {item.day}
-                        </Text>
-                    </View>
-                ))}
-            </View>
-        </View>
-    );
-};
-
-// Subject breakdown component
-const SubjectBreakdown = ({ subjects }: { subjects: { name: string; percentage: number; color: string }[] }) => {
-    return (
-        <View className="bg-dark-800 rounded-2xl p-4">
-            {subjects.map((subject, index) => (
-                <View key={index} className={`${index > 0 ? 'mt-4' : ''}`}>
-                    <View className="flex-row justify-between items-center mb-2">
-                        <View className="flex-row items-center">
-                            <View className={`w-2 h-2 rounded-full ${subject.color} mr-2`} />
-                            <Text className="text-white">{subject.name}</Text>
-                        </View>
-                        <Text className="text-dark-400">{subject.percentage}%</Text>
-                    </View>
-                    <View className="h-1.5 bg-dark-700 rounded-full">
-                        <View
-                            className={`h-1.5 rounded-full ${subject.color}`}
-                            style={{ width: `${subject.percentage}%` }}
-                        />
-                    </View>
-                </View>
-            ))}
-        </View>
-    );
-};
-
-// Consistency calendar
-const ConsistencyCalendar = ({ days }: { days: { date: number; status: 'done' | 'missed' | 'future' }[] }) => {
-    const weekDays = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
-
-    return (
-        <View className="bg-dark-800 rounded-2xl p-4">
-            {/* Legend */}
-            <View className="flex-row justify-end mb-3">
-                <View className="flex-row items-center mr-4">
-                    <View className="w-3 h-3 rounded-full bg-blue-500 mr-1" />
-                    <Text className="text-dark-400 text-xs">Done</Text>
-                </View>
-                <View className="flex-row items-center">
-                    <View className="w-3 h-3 rounded-full bg-red-500 mr-1" />
-                    <Text className="text-dark-400 text-xs">Missed</Text>
-                </View>
-            </View>
-
-            {/* Day headers */}
-            <View className="flex-row justify-between mb-2">
-                {weekDays.map((day, i) => (
-                    <View key={i} className="w-9 items-center">
-                        <Text className="text-dark-400 text-xs">{day}</Text>
-                    </View>
-                ))}
-            </View>
-
-            {/* Calendar grid */}
-            <View className="flex-row flex-wrap">
-                {days.map((day, index) => (
-                    <View
-                        key={index}
-                        className={`w-9 h-9 m-0.5 rounded-full items-center justify-center ${day.status === 'done'
-                                ? 'bg-blue-500'
-                                : day.status === 'missed'
-                                    ? 'bg-red-500/20 border border-red-500'
-                                    : 'bg-transparent'
-                            }`}
-                    >
-                        <Text className={`text-sm ${day.status === 'future' ? 'text-dark-500' : 'text-white'
-                            }`}>
-                            {day.date}
-                        </Text>
-                    </View>
-                ))}
-            </View>
-        </View>
-    );
-};
+import { View, Text, ScrollView, StyleSheet, SafeAreaView, StatusBar } from 'react-native';
 
 export default function ProgressScreen() {
-    const navigation = useNavigation();
-    const { current: streakCurrent, longest: streakLongest } = useAppSelector(state => state.streak);
-
-    // Weekly data
     const weeklyData = [
-        { day: 'M', hours: 3.5 },
-        { day: 'T', hours: 4.2 },
-        { day: 'W', hours: 2.8 },
-        { day: 'T', hours: 5.1, isToday: true },
-        { day: 'F', hours: 0 },
-        { day: 'S', hours: 0 },
-        { day: 'S', hours: 0 },
+        { day: 'Mon', hours: 3, max: 5 },
+        { day: 'Tue', hours: 4, max: 5 },
+        { day: 'Wed', hours: 2, max: 5 },
+        { day: 'Thu', hours: 5, max: 5 },
+        { day: 'Fri', hours: 3.5, max: 5 },
+        { day: 'Sat', hours: 1, max: 5 },
+        { day: 'Sun', hours: 0, max: 5 },
     ];
 
-    // Total hours
-    const totalHoursWeek = weeklyData.reduce((sum, d) => sum + d.hours, 0);
-
-    // Subject data
-    const subjectData = [
-        { name: 'Mathematics', percentage: 45, color: 'bg-blue-500' },
-        { name: 'Physics', percentage: 30, color: 'bg-purple-500' },
-        { name: 'History', percentage: 15, color: 'bg-green-500' },
-        { name: 'Others', percentage: 10, color: 'bg-yellow-500' },
+    const subjects = [
+        { name: 'Mathematics', hours: 8, color: '#8b5cf6', percent: 35 },
+        { name: 'Physics', hours: 6, color: '#06b6d4', percent: 26 },
+        { name: 'Chemistry', hours: 5, color: '#22c55e', percent: 22 },
+        { name: 'Biology', hours: 4, color: '#f97316', percent: 17 },
     ];
-
-    // Consistency calendar data (3 weeks)
-    const calendarDays: { date: number; status: 'done' | 'missed' | 'future' }[] = [];
-    for (let i = 1; i <= 21; i++) {
-        const status = i <= 18
-            ? (Math.random() > 0.2 ? 'done' : 'missed')
-            : 'future';
-        calendarDays.push({ date: i, status });
-    }
 
     return (
-        <SafeAreaView className="flex-1 bg-dark-900">
+        <SafeAreaView style={styles.container}>
             <StatusBar barStyle="light-content" backgroundColor="#0f172a" />
 
-            <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+            <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
                 {/* Header */}
-                <View className="flex-row items-center justify-between px-6 pt-4 pb-2">
-                    <Text className="text-white text-2xl font-bold">Your Progress</Text>
-                    <View className="flex-row">
-                        <TouchableOpacity className="w-10 h-10 rounded-full bg-dark-800 items-center justify-center mr-2">
-                            <Text className="text-lg">⚙️</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity className="w-10 h-10 rounded-full bg-dark-800 items-center justify-center">
-                            <Text className="text-lg">👤</Text>
-                        </TouchableOpacity>
-                    </View>
+                <View style={styles.header}>
+                    <Text style={styles.title}>Your Progress</Text>
+                    <Text style={styles.subtitle}>Track your study journey</Text>
                 </View>
 
                 {/* Streak Card */}
-                <View className="mx-6 mt-4 bg-gradient-to-b from-blue-900/40 to-dark-800 rounded-2xl p-6 items-center">
-                    <Text className="text-5xl mb-2">🔥</Text>
-                    <Text className="text-white text-4xl font-bold mb-1">
-                        {streakCurrent || 12} Days
-                    </Text>
-                    <Text className="text-dark-400 mb-3">Current Streak</Text>
-                    <View className="bg-dark-700/50 rounded-full px-4 py-2">
-                        <Text className="text-yellow-500">
-                            🏆 Longest: <Text className="text-blue-400">{streakLongest || 24} Days</Text>
-                        </Text>
-                    </View>
-                </View>
-
-                {/* Recovery Suggestion */}
-                <View className="mx-6 mt-4 bg-dark-800 rounded-2xl p-4">
-                    <View className="flex-row items-start">
-                        <View className="w-10 h-10 rounded-full bg-blue-500/20 items-center justify-center mr-3">
-                            <Text className="text-xl">💫</Text>
-                        </View>
-                        <View className="flex-1">
-                            <Text className="text-white font-semibold mb-1">Recovery Suggestion</Text>
-                            <Text className="text-dark-400 text-sm leading-5">
-                                You missed a session yesterday. Try a lighter 15-minute review today to gently get back on track.
-                            </Text>
+                <View style={styles.streakCard}>
+                    <View style={styles.streakContent}>
+                        <Text style={styles.streakEmoji}>🔥</Text>
+                        <View>
+                            <Text style={styles.streakNumber}>5 Day Streak!</Text>
+                            <Text style={styles.streakText}>Keep it up! You're doing great</Text>
                         </View>
                     </View>
                 </View>
 
-                {/* This Week's Focus */}
-                <View className="mx-6 mt-6">
-                    <View className="flex-row justify-between items-center mb-3">
-                        <Text className="text-white text-lg font-semibold">This Week's Focus</Text>
-                        <Text className="text-blue-500 font-semibold">
-                            {Math.floor(totalHoursWeek)}h {Math.round((totalHoursWeek % 1) * 60)}m
-                        </Text>
+                {/* Weekly Stats */}
+                <View style={styles.statsRow}>
+                    <View style={styles.statCard}>
+                        <Text style={styles.statValue}>23.5</Text>
+                        <Text style={styles.statLabel}>Hours this week</Text>
                     </View>
-                    <WeeklyBarChart data={weeklyData} />
+                    <View style={styles.statCard}>
+                        <Text style={styles.statValue}>12</Text>
+                        <Text style={styles.statLabel}>Sessions</Text>
+                    </View>
+                    <View style={styles.statCard}>
+                        <Text style={styles.statValue}>85%</Text>
+                        <Text style={styles.statLabel}>Avg Focus</Text>
+                    </View>
+                </View>
+
+                {/* Weekly Chart */}
+                <View style={styles.section}>
+                    <Text style={styles.sectionTitle}>Weekly Activity</Text>
+                    <View style={styles.chartContainer}>
+                        {weeklyData.map((item) => (
+                            <View key={item.day} style={styles.barWrapper}>
+                                <View style={styles.barBackground}>
+                                    <View
+                                        style={[
+                                            styles.barFill,
+                                            { height: `${(item.hours / item.max) * 100}%` }
+                                        ]}
+                                    />
+                                </View>
+                                <Text style={styles.barLabel}>{item.day}</Text>
+                            </View>
+                        ))}
+                    </View>
                 </View>
 
                 {/* Subject Breakdown */}
-                <View className="mx-6 mt-6">
-                    <Text className="text-white text-lg font-semibold mb-3">Subject Breakdown</Text>
-                    <SubjectBreakdown subjects={subjectData} />
+                <View style={styles.section}>
+                    <Text style={styles.sectionTitle}>Subject Breakdown</Text>
+                    {subjects.map((subject) => (
+                        <View key={subject.name} style={styles.subjectRow}>
+                            <View style={[styles.subjectDot, { backgroundColor: subject.color }]} />
+                            <View style={styles.subjectInfo}>
+                                <Text style={styles.subjectName}>{subject.name}</Text>
+                                <View style={styles.subjectProgressBar}>
+                                    <View
+                                        style={[
+                                            styles.subjectProgressFill,
+                                            { width: `${subject.percent}%`, backgroundColor: subject.color }
+                                        ]}
+                                    />
+                                </View>
+                            </View>
+                            <Text style={styles.subjectHours}>{subject.hours}h</Text>
+                        </View>
+                    ))}
                 </View>
 
-                {/* Consistency */}
-                <View className="mx-6 mt-6 mb-6">
-                    <Text className="text-white text-lg font-semibold mb-3">Consistency</Text>
-                    <ConsistencyCalendar days={calendarDays} />
+                {/* Goals */}
+                <View style={[styles.section, styles.lastSection]}>
+                    <Text style={styles.sectionTitle}>Weekly Goals</Text>
+                    <View style={styles.goalCard}>
+                        <View style={styles.goalHeader}>
+                            <Text style={styles.goalTitle}>Study 25 hours</Text>
+                            <Text style={styles.goalPercent}>94%</Text>
+                        </View>
+                        <View style={styles.goalProgressBar}>
+                            <View style={[styles.goalProgressFill, { width: '94%' }]} />
+                        </View>
+                        <Text style={styles.goalSubtext}>23.5 / 25 hours</Text>
+                    </View>
                 </View>
             </ScrollView>
         </SafeAreaView>
     );
 }
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        backgroundColor: '#0f172a',
+    },
+    scrollView: {
+        flex: 1,
+        paddingHorizontal: 20,
+    },
+    header: {
+        paddingTop: 20,
+        marginBottom: 24,
+    },
+    title: {
+        fontSize: 28,
+        fontWeight: 'bold',
+        color: '#ffffff',
+        marginBottom: 4,
+    },
+    subtitle: {
+        fontSize: 14,
+        color: '#94a3b8',
+    },
+    streakCard: {
+        backgroundColor: '#422006',
+        borderRadius: 16,
+        padding: 20,
+        marginBottom: 20,
+        borderWidth: 1,
+        borderColor: '#f97316',
+    },
+    streakContent: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    streakEmoji: {
+        fontSize: 40,
+        marginRight: 16,
+    },
+    streakNumber: {
+        color: '#f97316',
+        fontSize: 20,
+        fontWeight: 'bold',
+    },
+    streakText: {
+        color: '#fdba74',
+        fontSize: 14,
+    },
+    statsRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginBottom: 24,
+    },
+    statCard: {
+        flex: 1,
+        backgroundColor: '#1e293b',
+        borderRadius: 12,
+        padding: 16,
+        alignItems: 'center',
+        marginHorizontal: 4,
+    },
+    statValue: {
+        color: '#4ade80',
+        fontSize: 24,
+        fontWeight: 'bold',
+    },
+    statLabel: {
+        color: '#94a3b8',
+        fontSize: 12,
+        marginTop: 4,
+    },
+    section: {
+        marginBottom: 24,
+    },
+    lastSection: {
+        marginBottom: 40,
+    },
+    sectionTitle: {
+        color: '#ffffff',
+        fontSize: 18,
+        fontWeight: '600',
+        marginBottom: 16,
+    },
+    chartContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        height: 150,
+        alignItems: 'flex-end',
+    },
+    barWrapper: {
+        alignItems: 'center',
+        flex: 1,
+    },
+    barBackground: {
+        width: 24,
+        height: 120,
+        backgroundColor: '#1e293b',
+        borderRadius: 12,
+        justifyContent: 'flex-end',
+        overflow: 'hidden',
+    },
+    barFill: {
+        width: '100%',
+        backgroundColor: '#4ade80',
+        borderRadius: 12,
+    },
+    barLabel: {
+        color: '#94a3b8',
+        fontSize: 12,
+        marginTop: 8,
+    },
+    subjectRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 16,
+    },
+    subjectDot: {
+        width: 12,
+        height: 12,
+        borderRadius: 6,
+        marginRight: 12,
+    },
+    subjectInfo: {
+        flex: 1,
+    },
+    subjectName: {
+        color: '#ffffff',
+        fontSize: 14,
+        marginBottom: 6,
+    },
+    subjectProgressBar: {
+        height: 6,
+        backgroundColor: '#1e293b',
+        borderRadius: 3,
+    },
+    subjectProgressFill: {
+        height: '100%',
+        borderRadius: 3,
+    },
+    subjectHours: {
+        color: '#94a3b8',
+        fontSize: 14,
+        marginLeft: 12,
+    },
+    goalCard: {
+        backgroundColor: '#1e293b',
+        borderRadius: 12,
+        padding: 16,
+    },
+    goalHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginBottom: 12,
+    },
+    goalTitle: {
+        color: '#ffffff',
+        fontSize: 16,
+        fontWeight: '600',
+    },
+    goalPercent: {
+        color: '#4ade80',
+        fontSize: 16,
+        fontWeight: 'bold',
+    },
+    goalProgressBar: {
+        height: 8,
+        backgroundColor: '#334155',
+        borderRadius: 4,
+        marginBottom: 8,
+    },
+    goalProgressFill: {
+        height: '100%',
+        backgroundColor: '#4ade80',
+        borderRadius: 4,
+    },
+    goalSubtext: {
+        color: '#94a3b8',
+        fontSize: 12,
+    },
+});

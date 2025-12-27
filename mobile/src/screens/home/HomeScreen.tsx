@@ -1,272 +1,313 @@
 import React from 'react';
-import {
-    View,
-    Text,
-    TouchableOpacity,
-    ScrollView,
-    StatusBar,
-    SafeAreaView,
-} from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, SafeAreaView, StatusBar } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useAppSelector } from '../../store';
 
-// Session type colors
-const sessionColors = {
-    practice: { bg: 'bg-green-500/20', text: 'text-green-400', border: 'border-green-500' },
-    reading: { bg: 'bg-blue-500/20', text: 'text-blue-400', border: 'border-blue-500' },
-    revision: { bg: 'bg-yellow-500/20', text: 'text-yellow-400', border: 'border-yellow-500' },
-    writing: { bg: 'bg-pink-500/20', text: 'text-pink-400', border: 'border-pink-500' },
-};
-
-// Get greeting based on time
-const getGreeting = () => {
-    const hour = new Date().getHours();
-    if (hour < 12) return 'Good Morning';
-    if (hour < 17) return 'Good Afternoon';
-    return 'Good Evening';
-};
-
-// Format date
-const formatDate = (date: Date) => {
-    return date.toLocaleDateString('en-US', {
-        weekday: 'long',
-        month: 'short',
-        day: 'numeric',
-    });
-};
-
-// Week days component
-const WeekDays = ({ selectedDate }: { selectedDate: Date }) => {
-    const today = new Date();
-    const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-
-    const weekDays = [];
-    for (let i = -2; i <= 3; i++) {
-        const date = new Date(today);
-        date.setDate(today.getDate() + i);
-        weekDays.push(date);
-    }
-
-    return (
-        <View className="flex-row justify-between px-2">
-            {weekDays.map((date, index) => {
-                const isToday = date.toDateString() === today.toDateString();
-                return (
-                    <TouchableOpacity
-                        key={index}
-                        className={`items-center py-2 px-3 rounded-xl ${isToday ? 'bg-primary-600' : ''}`}
-                    >
-                        <Text className={`text-xs mb-1 ${isToday ? 'text-white' : 'text-dark-400'}`}>
-                            {dayNames[date.getDay()]}
-                        </Text>
-                        <Text className={`text-lg font-semibold ${isToday ? 'text-white' : 'text-white'}`}>
-                            {date.getDate()}
-                        </Text>
-                        {isToday && <View className="w-1 h-1 rounded-full bg-white mt-1" />}
-                    </TouchableOpacity>
-                );
-            })}
-        </View>
-    );
-};
-
-// Session card component
-const SessionCard = ({ session, isNext = false }: { session: any; isNext?: boolean }) => {
-    const colors = sessionColors[session.type as keyof typeof sessionColors] || sessionColors.reading;
-
-    return (
-        <View className={`bg-dark-800 rounded-2xl p-4 mb-3 ${isNext ? 'border-l-4 ' + colors.border : ''}`}>
-            <View className="flex-row justify-between items-start mb-2">
-                <View>
-                    <Text className="text-dark-400 text-sm">{session.startTime}</Text>
-                    <Text className="text-dark-500 text-xs">{session.endTime}</Text>
-                </View>
-                <View className={`px-3 py-1 rounded-full ${colors.bg}`}>
-                    <Text className={`text-xs font-medium uppercase ${colors.text}`}>
-                        {session.type}
-                    </Text>
-                </View>
-            </View>
-
-            <Text className="text-white text-lg font-semibold mb-1">{session.subject}</Text>
-
-            {session.notes && (
-                <Text className="text-dark-400 text-sm mb-3">{session.notes}</Text>
-            )}
-
-            {isNext && (
-                <TouchableOpacity className="bg-primary-600 rounded-xl py-3 flex-row items-center justify-center mt-2">
-                    <Text className="text-white mr-2">▶</Text>
-                    <Text className="text-white font-semibold">Start Focus Session</Text>
-                </TouchableOpacity>
-            )}
-
-            {session.status === 'completed' && (
-                <View className="flex-row items-center mt-2">
-                    <Text className="text-green-400 mr-1">✓</Text>
-                    <Text className="text-green-400 text-sm">Completed</Text>
-                </View>
-            )}
-
-            {session.status === 'missed' && (
-                <View className="flex-row items-center justify-between mt-2">
-                    <View className="flex-row items-center">
-                        <Text className="text-dark-400 text-sm">Session missed</Text>
-                    </View>
-                    <TouchableOpacity className="bg-dark-700 rounded-lg px-3 py-1">
-                        <Text className="text-dark-300 text-sm">Reschedule?</Text>
-                    </TouchableOpacity>
-                </View>
-            )}
-        </View>
-    );
-};
-
-// Progress ring component
-const ProgressRing = ({ progress, size = 100 }: { progress: number; size?: number }) => {
-    return (
-        <View className="items-center justify-center" style={{ width: size, height: size }}>
-            <View className="absolute w-full h-full rounded-full border-8 border-dark-700" />
-            <View
-                className="absolute w-full h-full rounded-full border-8 border-primary-600"
-                style={{
-                    transform: [{ rotate: '-90deg' }],
-                    borderRightColor: 'transparent',
-                    borderBottomColor: progress > 25 ? '#4f46e5' : 'transparent',
-                    borderLeftColor: progress > 50 ? '#4f46e5' : 'transparent',
-                    borderTopColor: progress > 75 ? '#4f46e5' : 'transparent',
-                }}
-            />
-            <Text className="text-white text-2xl font-bold">{progress}%</Text>
-        </View>
-    );
-};
+const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 export default function HomeScreen() {
-    const { user } = useAppSelector(state => state.auth);
-    const { todaySessions, sessions } = useAppSelector(state => state.planner);
-    const { current: streakCurrent } = useAppSelector(state => state.streak);
-    const { totalFocusToday, completedSessionsToday } = useAppSelector(state => state.focus);
+    const navigation = useNavigation();
+    const { user } = useAppSelector((state) => state.auth);
+    const today = new Date();
+    const currentDay = today.getDay();
 
-    // Calculate stats
-    const totalMinutesToday = todaySessions.reduce((sum, s) => sum + s.plannedMinutes, 0);
-    const completedMinutesToday = todaySessions
-        .filter(s => s.status === 'completed')
-        .reduce((sum, s) => sum + s.completedMinutes, 0);
-    const progressPercent = totalMinutesToday > 0
-        ? Math.round((completedMinutesToday / totalMinutesToday) * 100)
-        : 0;
-
-    // Demo sessions if none exist
-    const displaySessions = todaySessions.length > 0 ? todaySessions : [
-        {
-            id: '1',
-            subject: 'Advanced Calculus',
-            type: 'practice',
-            startTime: '14:00',
-            endTime: '15:30',
-            status: 'scheduled',
-            notes: 'Chapter 4: Derivatives and Integrals review.',
-        },
-        {
-            id: '2',
-            subject: 'Organic Chemistry',
-            type: 'reading',
-            startTime: '16:00',
-            endTime: '17:30',
-            status: 'scheduled',
-            notes: 'Lab preparation: Molecular structures.',
-        },
-        {
-            id: '3',
-            subject: 'History Essay',
-            type: 'writing',
-            startTime: '09:00',
-            endTime: '10:00',
-            status: 'missed',
-        },
+    const sessions = [
+        { id: 1, subject: 'Mathematics', topic: 'Calculus', time: '09:00 AM', duration: 45, color: '#8b5cf6' },
+        { id: 2, subject: 'Physics', topic: 'Mechanics', time: '11:00 AM', duration: 30, color: '#06b6d4' },
+        { id: 3, subject: 'Chemistry', topic: 'Organic', time: '02:00 PM', duration: 45, color: '#22c55e' },
     ];
 
-    const userName = user?.displayName || 'Student';
-
     return (
-        <SafeAreaView className="flex-1 bg-dark-900">
+        <SafeAreaView style={styles.container}>
             <StatusBar barStyle="light-content" backgroundColor="#0f172a" />
 
-            <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+            <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
                 {/* Header */}
-                <View className="px-6 pt-4 pb-2">
-                    <View className="flex-row justify-between items-center mb-4">
-                        <View>
-                            <Text className="text-dark-400 text-sm">{formatDate(new Date())}</Text>
-                            <Text className="text-white text-2xl font-bold">
-                                {getGreeting()}, {userName.split(' ')[0]}
-                            </Text>
-                        </View>
-                        <TouchableOpacity className="w-12 h-12 rounded-full bg-dark-800 items-center justify-center">
-                            <Text className="text-2xl">🔔</Text>
-                        </TouchableOpacity>
+                <View style={styles.header}>
+                    <View>
+                        <Text style={styles.greeting}>Hello, {user?.displayName || 'Student'}! 👋</Text>
+                        <Text style={styles.dateText}>{today.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</Text>
                     </View>
-
-                    {/* Week calendar */}
-                    <WeekDays selectedDate={new Date()} />
-                </View>
-
-                {/* Daily goal card */}
-                <View className="mx-6 mt-6 bg-dark-800 rounded-2xl p-5">
-                    <View className="flex-row items-center">
-                        <ProgressRing progress={progressPercent} />
-                        <View className="ml-6 flex-1">
-                            <Text className="text-dark-400 text-xs uppercase tracking-wider mb-1">DAILY GOAL</Text>
-                            <Text className="text-white text-2xl font-bold">
-                                {Math.floor(completedMinutesToday / 60)}h {completedMinutesToday % 60}m
-                                <Text className="text-dark-400 text-lg font-normal"> / {Math.floor(totalMinutesToday / 60)}h</Text>
-                            </Text>
-                            <View className="flex-row mt-2">
-                                <View className="mr-6">
-                                    <Text className="text-dark-400 text-xs">Completed</Text>
-                                    <Text className="text-white font-semibold">{completedSessionsToday} Tasks</Text>
-                                </View>
-                                <View>
-                                    <Text className="text-dark-400 text-xs">Focus Score</Text>
-                                    <Text className="text-white font-semibold">85/100</Text>
-                                </View>
-                            </View>
-                        </View>
+                    <View style={styles.streakBadge}>
+                        <Text style={styles.streakEmoji}>🔥</Text>
+                        <Text style={styles.streakText}>5</Text>
                     </View>
                 </View>
 
-                {/* Up Next section */}
-                <View className="px-6 mt-6">
-                    <View className="flex-row justify-between items-center mb-4">
-                        <Text className="text-white text-xl font-bold">Up Next</Text>
-                        <TouchableOpacity>
-                            <Text className="text-primary-500 font-medium">View Schedule</Text>
+                {/* Weekly Calendar */}
+                <View style={styles.weekContainer}>
+                    {DAYS.map((day, index) => (
+                        <TouchableOpacity
+                            key={day}
+                            style={[
+                                styles.dayButton,
+                                index === currentDay && styles.dayButtonActive
+                            ]}
+                        >
+                            <Text style={[
+                                styles.dayText,
+                                index === currentDay && styles.dayTextActive
+                            ]}>{day}</Text>
+                            <Text style={[
+                                styles.dateNumber,
+                                index === currentDay && styles.dateNumberActive
+                            ]}>{today.getDate() - currentDay + index}</Text>
                         </TouchableOpacity>
-                    </View>
-
-                    {displaySessions.map((session, index) => (
-                        <SessionCard
-                            key={session.id}
-                            session={session}
-                            isNext={index === 0 && session.status === 'scheduled'}
-                        />
                     ))}
                 </View>
 
-                {/* Study tip */}
-                <View className="mx-6 mt-4 mb-6 bg-dark-800 rounded-2xl p-4">
-                    <View className="flex-row items-start">
-                        <Text className="text-2xl mr-3">💡</Text>
-                        <View className="flex-1">
-                            <Text className="text-white font-semibold mb-1">Study Tip</Text>
-                            <Text className="text-dark-400 text-sm">
-                                Try the Pomodoro technique for your calculus session today. 25 minutes focus, 5 minutes break.
-                            </Text>
-                        </View>
+                {/* Progress Card */}
+                <View style={styles.progressCard}>
+                    <View style={styles.progressHeader}>
+                        <Text style={styles.progressTitle}>Today's Progress</Text>
+                        <Text style={styles.progressPercent}>65%</Text>
+                    </View>
+                    <View style={styles.progressBar}>
+                        <View style={[styles.progressFill, { width: '65%' }]} />
+                    </View>
+                    <Text style={styles.progressSubtext}>2 of 3 sessions completed</Text>
+                </View>
+
+                {/* Today's Sessions */}
+                <View style={styles.sessionsContainer}>
+                    <Text style={styles.sectionTitle}>Today's Sessions</Text>
+                    {sessions.map((session) => (
+                        <TouchableOpacity
+                            key={session.id}
+                            style={styles.sessionCard}
+                            onPress={() => navigation.navigate('Focus' as never)}
+                        >
+                            <View style={[styles.sessionIndicator, { backgroundColor: session.color }]} />
+                            <View style={styles.sessionContent}>
+                                <View style={styles.sessionHeader}>
+                                    <Text style={styles.sessionSubject}>{session.subject}</Text>
+                                    <Text style={styles.sessionTime}>{session.time}</Text>
+                                </View>
+                                <Text style={styles.sessionTopic}>{session.topic}</Text>
+                                <View style={styles.sessionFooter}>
+                                    <Text style={styles.sessionDuration}>{session.duration} min</Text>
+                                    <Text style={styles.startButton}>Start →</Text>
+                                </View>
+                            </View>
+                        </TouchableOpacity>
+                    ))}
+                </View>
+
+                {/* Quick Stats */}
+                <View style={styles.statsRow}>
+                    <View style={styles.statCard}>
+                        <Text style={styles.statEmoji}>⏱️</Text>
+                        <Text style={styles.statValue}>2.5h</Text>
+                        <Text style={styles.statLabel}>Study Time</Text>
+                    </View>
+                    <View style={styles.statCard}>
+                        <Text style={styles.statEmoji}>📖</Text>
+                        <Text style={styles.statValue}>3</Text>
+                        <Text style={styles.statLabel}>Subjects</Text>
+                    </View>
+                    <View style={styles.statCard}>
+                        <Text style={styles.statEmoji}>🎯</Text>
+                        <Text style={styles.statValue}>85%</Text>
+                        <Text style={styles.statLabel}>Focus</Text>
                     </View>
                 </View>
             </ScrollView>
         </SafeAreaView>
     );
 }
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        backgroundColor: '#0f172a',
+    },
+    scrollView: {
+        flex: 1,
+        paddingHorizontal: 20,
+    },
+    header: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingTop: 20,
+        marginBottom: 24,
+    },
+    greeting: {
+        fontSize: 24,
+        fontWeight: 'bold',
+        color: '#ffffff',
+        marginBottom: 4,
+    },
+    dateText: {
+        fontSize: 14,
+        color: '#94a3b8',
+    },
+    streakBadge: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#1e293b',
+        paddingHorizontal: 12,
+        paddingVertical: 8,
+        borderRadius: 20,
+    },
+    streakEmoji: {
+        fontSize: 20,
+        marginRight: 4,
+    },
+    streakText: {
+        color: '#f97316',
+        fontWeight: 'bold',
+        fontSize: 16,
+    },
+    weekContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginBottom: 24,
+    },
+    dayButton: {
+        alignItems: 'center',
+        paddingVertical: 12,
+        paddingHorizontal: 8,
+        borderRadius: 12,
+        minWidth: 44,
+    },
+    dayButtonActive: {
+        backgroundColor: '#4ade80',
+    },
+    dayText: {
+        color: '#94a3b8',
+        fontSize: 12,
+        marginBottom: 4,
+    },
+    dayTextActive: {
+        color: '#0f172a',
+    },
+    dateNumber: {
+        color: '#ffffff',
+        fontSize: 16,
+        fontWeight: '600',
+    },
+    dateNumberActive: {
+        color: '#0f172a',
+    },
+    progressCard: {
+        backgroundColor: '#1e293b',
+        borderRadius: 16,
+        padding: 20,
+        marginBottom: 24,
+    },
+    progressHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 12,
+    },
+    progressTitle: {
+        color: '#ffffff',
+        fontSize: 16,
+        fontWeight: '600',
+    },
+    progressPercent: {
+        color: '#4ade80',
+        fontSize: 18,
+        fontWeight: 'bold',
+    },
+    progressBar: {
+        height: 8,
+        backgroundColor: '#334155',
+        borderRadius: 4,
+        marginBottom: 8,
+    },
+    progressFill: {
+        height: '100%',
+        backgroundColor: '#4ade80',
+        borderRadius: 4,
+    },
+    progressSubtext: {
+        color: '#94a3b8',
+        fontSize: 12,
+    },
+    sessionsContainer: {
+        marginBottom: 24,
+    },
+    sectionTitle: {
+        color: '#ffffff',
+        fontSize: 18,
+        fontWeight: '600',
+        marginBottom: 16,
+    },
+    sessionCard: {
+        flexDirection: 'row',
+        backgroundColor: '#1e293b',
+        borderRadius: 12,
+        overflow: 'hidden',
+        marginBottom: 12,
+    },
+    sessionIndicator: {
+        width: 4,
+    },
+    sessionContent: {
+        flex: 1,
+        padding: 16,
+    },
+    sessionHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 4,
+    },
+    sessionSubject: {
+        color: '#ffffff',
+        fontSize: 16,
+        fontWeight: '600',
+    },
+    sessionTime: {
+        color: '#94a3b8',
+        fontSize: 12,
+    },
+    sessionTopic: {
+        color: '#94a3b8',
+        fontSize: 14,
+        marginBottom: 8,
+    },
+    sessionFooter: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+    },
+    sessionDuration: {
+        color: '#64748b',
+        fontSize: 12,
+    },
+    startButton: {
+        color: '#4ade80',
+        fontWeight: '600',
+    },
+    statsRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginBottom: 32,
+    },
+    statCard: {
+        flex: 1,
+        backgroundColor: '#1e293b',
+        borderRadius: 12,
+        padding: 16,
+        alignItems: 'center',
+        marginHorizontal: 4,
+    },
+    statEmoji: {
+        fontSize: 24,
+        marginBottom: 8,
+    },
+    statValue: {
+        color: '#ffffff',
+        fontSize: 20,
+        fontWeight: 'bold',
+        marginBottom: 4,
+    },
+    statLabel: {
+        color: '#94a3b8',
+        fontSize: 12,
+    },
+});

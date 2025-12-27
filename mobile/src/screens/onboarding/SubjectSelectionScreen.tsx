@@ -1,159 +1,214 @@
 import React, { useState } from 'react';
-import {
-    View,
-    Text,
-    TouchableOpacity,
-    TextInput,
-    ScrollView,
-    StatusBar,
-    SafeAreaView,
-} from 'react-native';
+import { View, Text, TouchableOpacity, TextInput, FlatList, StyleSheet, SafeAreaView, StatusBar } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useAppDispatch, useAppSelector } from '../../store';
-import { toggleSubject, nextStep } from '../../store/onboardingSlice';
-import { RootStackParamList, AVAILABLE_SUBJECTS } from '../../types';
+import { useAppDispatch } from '../../store';
+import { setSubjects } from '../../store/onboardingSlice';
+import { RootStackParamList } from '../../types';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
-// Subject icons mapping
-const subjectIcons: Record<string, string> = {
-    Mathematics: '📐',
-    Physics: '⚛️',
-    Chemistry: '🧪',
-    Biology: '🧬',
-    History: '📜',
-    Literature: '📚',
-    'Computer Science': '💻',
-    Economics: '📊',
-    Psychology: '🧠',
-    Languages: '🌍',
-};
+const SUBJECTS = [
+    'Mathematics', 'Physics', 'Chemistry', 'Biology',
+    'English', 'History', 'Geography', 'Economics',
+    'Computer Science', 'Psychology', 'Philosophy', 'Art',
+];
 
 export default function SubjectSelectionScreen() {
     const navigation = useNavigation<NavigationProp>();
     const dispatch = useAppDispatch();
-    const { subjects } = useAppSelector(state => state.onboarding);
-    const [searchQuery, setSearchQuery] = useState('');
+    const [selected, setSelected] = useState<string[]>([]);
+    const [search, setSearch] = useState('');
 
-    const filteredSubjects = AVAILABLE_SUBJECTS.filter(subject =>
-        subject.name.toLowerCase().includes(searchQuery.toLowerCase())
+    const filteredSubjects = SUBJECTS.filter(s =>
+        s.toLowerCase().includes(search.toLowerCase())
     );
 
-    const handleSubjectToggle = (subjectName: string) => {
-        dispatch(toggleSubject(subjectName));
+    const toggleSubject = (subject: string) => {
+        setSelected(prev =>
+            prev.includes(subject)
+                ? prev.filter(s => s !== subject)
+                : [...prev, subject]
+        );
     };
 
     const handleContinue = () => {
-        if (subjects.length > 0) {
-            dispatch(nextStep());
-            navigation.navigate('ExamDates');
-        }
+        dispatch(setSubjects(selected));
+        navigation.navigate('ExamDate');
     };
 
-    const isSelected = (subjectName: string) => subjects.includes(subjectName);
-    const completionPercent = Math.min(Math.round((subjects.length / 3) * 40), 40);
-
     return (
-        <SafeAreaView className="flex-1 bg-dark-900">
+        <SafeAreaView style={styles.container}>
             <StatusBar barStyle="light-content" backgroundColor="#0f172a" />
 
-            {/* Header */}
-            <View className="px-6 pt-4 pb-2">
-                <View className="flex-row items-center mb-4">
-                    <TouchableOpacity
-                        onPress={() => navigation.goBack()}
-                        className="p-2 -ml-2"
-                    >
-                        <Text className="text-white text-2xl">←</Text>
+            <View style={styles.content}>
+                {/* Header */}
+                <View style={styles.header}>
+                    <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+                        <Text style={styles.backText}>←</Text>
                     </TouchableOpacity>
-                    <Text className="flex-1 text-white text-lg font-semibold text-center mr-8">
-                        Subject Selection
-                    </Text>
+                    <View style={styles.stepIndicator}>
+                        <View style={styles.stepActive} />
+                        <View style={styles.step} />
+                        <View style={styles.step} />
+                    </View>
                 </View>
 
-                {/* Progress bar */}
-                <View className="flex-row items-center justify-between mb-6">
-                    <Text className="text-dark-400 text-sm">STEP 2 OF 5</Text>
-                    <Text className="text-primary-500 text-sm font-medium">
-                        {completionPercent}% Completed
-                    </Text>
-                </View>
-                <View className="h-1.5 bg-dark-700 rounded-full mb-6">
-                    <View
-                        className="h-1.5 bg-primary-600 rounded-full"
-                        style={{ width: `${completionPercent}%` }}
-                    />
-                </View>
-            </View>
-
-            <ScrollView className="flex-1 px-6" showsVerticalScrollIndicator={false}>
                 {/* Title */}
-                <Text className="text-white text-3xl font-bold mb-2">
-                    What are you studying?
-                </Text>
-                <Text className="text-dark-400 text-base mb-6">
-                    Select all subjects included in your curriculum to personalize your study plan.
-                </Text>
+                <Text style={styles.title}>What are you studying?</Text>
+                <Text style={styles.subtitle}>Select your subjects to personalize your study plan</Text>
 
-                {/* Search input */}
-                <View className="bg-dark-800 rounded-xl flex-row items-center px-4 py-3 mb-6">
-                    <Text className="text-dark-400 text-xl mr-3">🔍</Text>
-                    <TextInput
-                        className="flex-1 text-white text-base"
-                        placeholder="Search subjects..."
-                        placeholderTextColor="#64748b"
-                        value={searchQuery}
-                        onChangeText={setSearchQuery}
-                    />
-                </View>
+                {/* Search */}
+                <TextInput
+                    style={styles.searchInput}
+                    placeholder="Search subjects..."
+                    placeholderTextColor="#64748b"
+                    value={search}
+                    onChangeText={setSearch}
+                />
 
-                {/* Subject grid */}
-                <View className="flex-row flex-wrap justify-between pb-24">
-                    {filteredSubjects.map((subject) => (
+                {/* Subjects Grid */}
+                <FlatList
+                    data={filteredSubjects}
+                    numColumns={2}
+                    keyExtractor={(item) => item}
+                    contentContainerStyle={styles.grid}
+                    renderItem={({ item }) => (
                         <TouchableOpacity
-                            key={subject.id}
-                            className={`w-[48%] mb-4 rounded-2xl p-4 ${isSelected(subject.name) ? 'bg-primary-900 border-2 border-primary-600' : 'bg-dark-800'
-                                }`}
-                            onPress={() => handleSubjectToggle(subject.name)}
-                            activeOpacity={0.7}
+                            style={[
+                                styles.subjectCard,
+                                selected.includes(item) && styles.subjectCardSelected
+                            ]}
+                            onPress={() => toggleSubject(item)}
                         >
-                            <View className="flex-row justify-between items-start mb-3">
-                                <View className="w-12 h-12 rounded-xl bg-dark-700 items-center justify-center">
-                                    <Text className="text-2xl">{subjectIcons[subject.name] || '📖'}</Text>
-                                </View>
-                                <View className={`w-6 h-6 rounded-full border-2 items-center justify-center ${isSelected(subject.name)
-                                        ? 'bg-primary-600 border-primary-600'
-                                        : 'border-dark-600'
-                                    }`}>
-                                    {isSelected(subject.name) && (
-                                        <Text className="text-white text-xs">✓</Text>
-                                    )}
-                                </View>
-                            </View>
-                            <Text className="text-white font-semibold text-base">
-                                {subject.name}
-                            </Text>
+                            <Text style={[
+                                styles.subjectText,
+                                selected.includes(item) && styles.subjectTextSelected
+                            ]}>{item}</Text>
+                            {selected.includes(item) && (
+                                <Text style={styles.checkmark}>✓</Text>
+                            )}
                         </TouchableOpacity>
-                    ))}
-                </View>
-            </ScrollView>
+                    )}
+                />
 
-            {/* Continue button */}
-            <View className="absolute bottom-0 left-0 right-0 px-6 pb-8 pt-4 bg-dark-900">
+                {/* Continue Button */}
                 <TouchableOpacity
-                    className={`rounded-2xl py-4 items-center ${subjects.length > 0 ? 'bg-primary-600' : 'bg-dark-700'
-                        }`}
+                    style={[styles.continueButton, selected.length === 0 && styles.disabledButton]}
                     onPress={handleContinue}
-                    disabled={subjects.length === 0}
-                    activeOpacity={0.8}
+                    disabled={selected.length === 0}
                 >
-                    <Text className={`text-lg font-semibold ${subjects.length > 0 ? 'text-white' : 'text-dark-400'
-                        }`}>
-                        Continue
+                    <Text style={styles.continueText}>
+                        Continue ({selected.length} selected)
                     </Text>
                 </TouchableOpacity>
             </View>
         </SafeAreaView>
     );
 }
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        backgroundColor: '#0f172a',
+    },
+    content: {
+        flex: 1,
+        paddingHorizontal: 20,
+    },
+    header: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingTop: 16,
+        marginBottom: 24,
+    },
+    backButton: {
+        padding: 8,
+        marginRight: 16,
+    },
+    backText: {
+        color: '#ffffff',
+        fontSize: 24,
+    },
+    stepIndicator: {
+        flexDirection: 'row',
+        flex: 1,
+    },
+    step: {
+        flex: 1,
+        height: 4,
+        backgroundColor: '#334155',
+        borderRadius: 2,
+        marginHorizontal: 2,
+    },
+    stepActive: {
+        flex: 1,
+        height: 4,
+        backgroundColor: '#4ade80',
+        borderRadius: 2,
+        marginHorizontal: 2,
+    },
+    title: {
+        fontSize: 28,
+        fontWeight: 'bold',
+        color: '#ffffff',
+        marginBottom: 8,
+    },
+    subtitle: {
+        fontSize: 16,
+        color: '#94a3b8',
+        marginBottom: 24,
+    },
+    searchInput: {
+        backgroundColor: '#1e293b',
+        borderRadius: 12,
+        paddingHorizontal: 16,
+        paddingVertical: 14,
+        color: '#ffffff',
+        fontSize: 16,
+        marginBottom: 20,
+    },
+    grid: {
+        paddingBottom: 20,
+    },
+    subjectCard: {
+        flex: 1,
+        backgroundColor: '#1e293b',
+        borderRadius: 12,
+        padding: 16,
+        margin: 4,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+    },
+    subjectCardSelected: {
+        backgroundColor: '#4ade80',
+    },
+    subjectText: {
+        color: '#ffffff',
+        fontSize: 14,
+        fontWeight: '500',
+    },
+    subjectTextSelected: {
+        color: '#0f172a',
+    },
+    checkmark: {
+        color: '#0f172a',
+        fontWeight: 'bold',
+    },
+    continueButton: {
+        backgroundColor: '#4ade80',
+        borderRadius: 12,
+        paddingVertical: 16,
+        alignItems: 'center',
+        marginBottom: 20,
+    },
+    disabledButton: {
+        opacity: 0.5,
+    },
+    continueText: {
+        color: '#0f172a',
+        fontSize: 18,
+        fontWeight: 'bold',
+    },
+});

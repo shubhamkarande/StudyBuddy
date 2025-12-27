@@ -1,57 +1,46 @@
-import './global.css';
 import React, { useEffect } from 'react';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { StatusBar, StyleSheet } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Provider } from 'react-redux';
-import { store } from './src/store';
+import { store, useAppDispatch } from './src/store';
+import { setUser, setLoading } from './src/store/authSlice';
 import RootNavigator from './src/navigation/RootNavigator';
-import { setUser, setLoading, logout } from './src/store/authSlice';
-import { firebaseAuth, firestoreDB } from './src/services/firebase';
+import auth from '@react-native-firebase/auth';
 
-function AppContent(): React.JSX.Element {
+function AppContent() {
+  const dispatch = useAppDispatch();
+
   useEffect(() => {
-    // Listen to Firebase Auth state changes
-    const unsubscribe = firebaseAuth.onAuthStateChanged(async (firebaseUser) => {
-      if (firebaseUser) {
-        try {
-          // Get user data from Firestore
-          const userData = await firestoreDB.users.get(firebaseUser.uid);
-          if (userData) {
-            store.dispatch(setUser(userData));
-          } else {
-            // User exists in Auth but not in Firestore
-            const newUser = {
-              uid: firebaseUser.uid,
-              email: firebaseUser.email || '',
-              displayName: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'User',
-              subjects: [],
-              examDates: [],
-              dailyAvailability: 4,
-              studyStyle: 'pomodoro' as const,
-              onboardingComplete: false,
-              createdAt: new Date().toISOString(),
-            };
-            store.dispatch(setUser(newUser));
-          }
-        } catch (error) {
-          console.error('Error fetching user data:', error);
-          store.dispatch(setLoading(false));
-        }
+    dispatch(setLoading(true));
+
+    const unsubscribe = auth().onAuthStateChanged((user) => {
+      if (user) {
+        dispatch(setUser({
+          id: user.uid,
+          email: user.email || '',
+          displayName: user.displayName || user.email?.split('@')[0] || 'User',
+        }));
       } else {
-        store.dispatch(logout());
+        dispatch(setUser(null));
       }
-      store.dispatch(setLoading(false));
+      dispatch(setLoading(false));
     });
 
-    return () => unsubscribe();
-  }, []);
+    return unsubscribe;
+  }, [dispatch]);
 
-  return <RootNavigator />;
+  return (
+    <>
+      <StatusBar barStyle="light-content" backgroundColor="#0f172a" />
+      <RootNavigator />
+    </>
+  );
 }
 
-function App(): React.JSX.Element {
+export default function App() {
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
+    <GestureHandlerRootView style={styles.container}>
       <SafeAreaProvider>
         <Provider store={store}>
           <AppContent />
@@ -61,4 +50,8 @@ function App(): React.JSX.Element {
   );
 }
 
-export default App;
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+});

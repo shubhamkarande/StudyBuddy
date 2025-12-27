@@ -10,6 +10,7 @@ import {
     KeyboardAvoidingView,
     Platform,
     Alert,
+    StyleSheet,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -77,105 +78,208 @@ export default function LoginScreen() {
     };
 
     return (
-        <SafeAreaView className="flex-1 bg-dark-900">
+        <SafeAreaView style={styles.container}>
             <StatusBar barStyle="light-content" backgroundColor="#0f172a" />
 
             <KeyboardAvoidingView
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                className="flex-1"
+                style={styles.flex1}
             >
                 {/* Header */}
-                <View className="px-6 pt-4">
+                <View style={styles.header}>
                     <TouchableOpacity
                         onPress={() => navigation.goBack()}
-                        className="p-2 -ml-2 w-12"
+                        style={styles.backButton}
                     >
-                        <Text className="text-white text-2xl">←</Text>
+                        <Text style={styles.backText}>←</Text>
                     </TouchableOpacity>
                 </View>
 
-                <View className="flex-1 px-6 justify-center">
+                <View style={styles.content}>
                     {/* Title */}
-                    <View className="items-center mb-10">
-                        <Text className="text-5xl mb-4">📚</Text>
-                        <Text className="text-white text-3xl font-bold mb-2">
-                            Welcome back!
-                        </Text>
-                        <Text className="text-dark-400 text-center">
-                            Log in to continue your study journey
-                        </Text>
+                    <View style={styles.titleContainer}>
+                        <Text style={styles.emoji}>📚</Text>
+                        <Text style={styles.title}>Welcome Back</Text>
+                        <Text style={styles.subtitle}>Sign in to continue your study journey</Text>
                     </View>
 
                     {/* Form */}
-                    <View className="mb-6">
-                        <Text className="text-dark-300 text-sm font-medium mb-2">Email</Text>
-                        <View className="bg-dark-800 rounded-xl flex-row items-center px-4">
-                            <Text className="text-dark-400 mr-3">✉️</Text>
+                    <View style={styles.form}>
+                        <View style={styles.inputContainer}>
+                            <Text style={styles.label}>Email</Text>
                             <TextInput
-                                className="flex-1 py-4 text-white text-base"
-                                placeholder="your@email.com"
+                                style={styles.input}
+                                placeholder="Enter your email"
                                 placeholderTextColor="#64748b"
                                 value={email}
                                 onChangeText={setEmail}
                                 keyboardType="email-address"
                                 autoCapitalize="none"
-                                autoComplete="email"
                             />
                         </View>
-                    </View>
 
-                    <View className="mb-8">
-                        <Text className="text-dark-300 text-sm font-medium mb-2">Password</Text>
-                        <View className="bg-dark-800 rounded-xl flex-row items-center px-4">
-                            <Text className="text-dark-400 mr-3">🔒</Text>
-                            <TextInput
-                                className="flex-1 py-4 text-white text-base"
-                                placeholder="Enter your password"
-                                placeholderTextColor="#64748b"
-                                value={password}
-                                onChangeText={setPassword}
-                                secureTextEntry={!showPassword}
-                                autoComplete="password"
-                            />
-                            <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-                                <Text className="text-dark-400">{showPassword ? '👁️' : '👁️‍🗨️'}</Text>
-                            </TouchableOpacity>
+                        <View style={styles.inputContainer}>
+                            <Text style={styles.label}>Password</Text>
+                            <View style={styles.passwordContainer}>
+                                <TextInput
+                                    style={styles.passwordInput}
+                                    placeholder="Enter your password"
+                                    placeholderTextColor="#64748b"
+                                    value={password}
+                                    onChangeText={setPassword}
+                                    secureTextEntry={!showPassword}
+                                />
+                                <TouchableOpacity
+                                    onPress={() => setShowPassword(!showPassword)}
+                                    style={styles.eyeButton}
+                                >
+                                    <Text style={styles.eyeText}>{showPassword ? '👁' : '👁‍🗨'}</Text>
+                                </TouchableOpacity>
+                            </View>
                         </View>
+
+                        <TouchableOpacity onPress={handleForgotPassword}>
+                            <Text style={styles.forgotPassword}>Forgot Password?</Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                            style={[styles.loginButton, isLoading && styles.disabledButton]}
+                            onPress={handleLogin}
+                            disabled={isLoading}
+                        >
+                            {isLoading ? (
+                                <ActivityIndicator color="#0f172a" />
+                            ) : (
+                                <Text style={styles.loginButtonText}>Sign In</Text>
+                            )}
+                        </TouchableOpacity>
                     </View>
 
-                    {/* Login button */}
-                    <TouchableOpacity
-                        className={`rounded-2xl py-4 items-center ${email && password ? 'bg-primary-600' : 'bg-dark-700'
-                            }`}
-                        onPress={handleLogin}
-                        disabled={isLoading || !email || !password}
-                        activeOpacity={0.8}
-                    >
-                        {isLoading ? (
-                            <ActivityIndicator color="white" />
-                        ) : (
-                            <Text className="text-white text-lg font-semibold">Log In</Text>
-                        )}
-                    </TouchableOpacity>
-
-                    {/* Forgot password */}
-                    <TouchableOpacity className="py-4" onPress={handleForgotPassword}>
-                        <Text className="text-primary-500 text-center font-medium">
-                            Forgot password?
-                        </Text>
-                    </TouchableOpacity>
-                </View>
-
-                {/* Register link */}
-                <View className="px-6 pb-8">
-                    <TouchableOpacity onPress={() => navigation.navigate('Register')}>
-                        <Text className="text-dark-400 text-center">
-                            Don't have an account?{' '}
-                            <Text className="text-white font-semibold">Sign up</Text>
-                        </Text>
-                    </TouchableOpacity>
+                    {/* Register Link */}
+                    <View style={styles.registerContainer}>
+                        <Text style={styles.registerText}>Don't have an account? </Text>
+                        <TouchableOpacity onPress={() => navigation.navigate('Register')}>
+                            <Text style={styles.registerLink}>Sign Up</Text>
+                        </TouchableOpacity>
+                    </View>
                 </View>
             </KeyboardAvoidingView>
         </SafeAreaView>
     );
 }
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        backgroundColor: '#0f172a',
+    },
+    flex1: {
+        flex: 1,
+    },
+    header: {
+        paddingHorizontal: 24,
+        paddingTop: 16,
+    },
+    backButton: {
+        padding: 8,
+        marginLeft: -8,
+        width: 48,
+    },
+    backText: {
+        color: '#ffffff',
+        fontSize: 24,
+    },
+    content: {
+        flex: 1,
+        paddingHorizontal: 24,
+        justifyContent: 'center',
+    },
+    titleContainer: {
+        alignItems: 'center',
+        marginBottom: 40,
+    },
+    emoji: {
+        fontSize: 64,
+        marginBottom: 16,
+    },
+    title: {
+        fontSize: 28,
+        fontWeight: 'bold',
+        color: '#ffffff',
+        marginBottom: 8,
+    },
+    subtitle: {
+        fontSize: 16,
+        color: '#94a3b8',
+        textAlign: 'center',
+    },
+    form: {
+        marginBottom: 24,
+    },
+    inputContainer: {
+        marginBottom: 16,
+    },
+    label: {
+        color: '#94a3b8',
+        fontSize: 14,
+        marginBottom: 8,
+    },
+    input: {
+        backgroundColor: '#1e293b',
+        borderRadius: 12,
+        paddingHorizontal: 16,
+        paddingVertical: 14,
+        color: '#ffffff',
+        fontSize: 16,
+    },
+    passwordContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#1e293b',
+        borderRadius: 12,
+    },
+    passwordInput: {
+        flex: 1,
+        paddingHorizontal: 16,
+        paddingVertical: 14,
+        color: '#ffffff',
+        fontSize: 16,
+    },
+    eyeButton: {
+        padding: 14,
+    },
+    eyeText: {
+        fontSize: 20,
+    },
+    forgotPassword: {
+        color: '#4ade80',
+        textAlign: 'right',
+        marginTop: 8,
+        marginBottom: 24,
+    },
+    loginButton: {
+        backgroundColor: '#4ade80',
+        borderRadius: 12,
+        paddingVertical: 16,
+        alignItems: 'center',
+    },
+    disabledButton: {
+        opacity: 0.7,
+    },
+    loginButtonText: {
+        color: '#0f172a',
+        fontSize: 18,
+        fontWeight: 'bold',
+    },
+    registerContainer: {
+        flexDirection: 'row',
+        justifyContent: 'center',
+    },
+    registerText: {
+        color: '#94a3b8',
+    },
+    registerLink: {
+        color: '#4ade80',
+        fontWeight: 'bold',
+    },
+});

@@ -1,209 +1,238 @@
 import React, { useState } from 'react';
-import {
-    View,
-    Text,
-    TouchableOpacity,
-    Switch,
-    ScrollView,
-    StatusBar,
-    SafeAreaView,
-    Alert,
-} from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import { useAppDispatch, useAppSelector } from '../../store';
-import { logout } from '../../store/authSlice';
-
-// Menu item component
-const MenuItem = ({
-    icon,
-    iconBg,
-    title,
-    subtitle,
-    onPress,
-    rightElement,
-}: {
-    icon: string;
-    iconBg: string;
-    title: string;
-    subtitle?: string;
-    onPress?: () => void;
-    rightElement?: React.ReactNode;
-}) => {
-    return (
-        <TouchableOpacity
-            className="bg-white rounded-2xl p-4 flex-row items-center mb-3 shadow-sm"
-            onPress={onPress}
-            activeOpacity={onPress ? 0.7 : 1}
-        >
-            <View className={`w-12 h-12 rounded-xl items-center justify-center mr-4 ${iconBg}`}>
-                <Text className="text-xl">{icon}</Text>
-            </View>
-            <View className="flex-1">
-                <Text className="text-gray-900 font-semibold text-base">{title}</Text>
-                {subtitle && (
-                    <Text className="text-gray-500 text-sm mt-0.5">{subtitle}</Text>
-                )}
-            </View>
-            {rightElement || (
-                <Text className="text-gray-400">›</Text>
-            )}
-        </TouchableOpacity>
-    );
-};
-
-// Section header component
-const SectionHeader = ({ title }: { title: string }) => {
-    return (
-        <Text className="text-gray-400 text-xs font-semibold ml-4 mb-3 mt-6 tracking-wider">
-            {title}
-        </Text>
-    );
-};
+import { View, Text, ScrollView, TouchableOpacity, Switch, StyleSheet, SafeAreaView, StatusBar, Alert } from 'react-native';
+import { useAppSelector, useAppDispatch } from '../../store';
+import { setUser } from '../../store/authSlice';
+import { firebaseAuth } from '../../services/firebase';
 
 export default function SettingsScreen() {
-    const navigation = useNavigation();
+    const { user } = useAppSelector((state) => state.auth);
     const dispatch = useAppDispatch();
-    const { user } = useAppSelector(state => state.auth);
-    const [isDarkMode, setIsDarkMode] = useState(true);
-    const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+    const [notifications, setNotifications] = useState(true);
+    const [darkMode, setDarkMode] = useState(true);
+    const [sounds, setSounds] = useState(true);
+    const [haptics, setHaptics] = useState(true);
 
-    const handleLogout = () => {
+    const handleLogout = async () => {
         Alert.alert(
-            'Log Out',
-            'Are you sure you want to log out?',
+            'Logout',
+            'Are you sure you want to logout?',
             [
                 { text: 'Cancel', style: 'cancel' },
                 {
-                    text: 'Log Out',
+                    text: 'Logout',
                     style: 'destructive',
-                    onPress: () => dispatch(logout()),
-                },
-            ]
-        );
-    };
-
-    const handleExportPDF = () => {
-        Alert.alert(
-            'Export Schedule',
-            'Your study schedule will be downloaded as a PDF file.',
-            [
-                { text: 'Cancel', style: 'cancel' },
-                {
-                    text: 'Export',
-                    onPress: () => {
-                        // PDF export logic would go here
-                        Alert.alert('Success', 'Schedule exported successfully!');
+                    onPress: async () => {
+                        try {
+                            await firebaseAuth.signOut();
+                            dispatch(setUser(null));
+                        } catch (error) {
+                            Alert.alert('Error', 'Failed to logout. Please try again.');
+                        }
                     },
                 },
             ]
         );
     };
 
-    // Get user initials for avatar
-    const getInitials = () => {
-        if (!user?.displayName) return 'U';
-        const names = user.displayName.split(' ');
-        return names.map((n: string) => n[0]).join('').toUpperCase().slice(0, 2);
-    };
+    const settingSections = [
+        {
+            title: 'Preferences',
+            items: [
+                { icon: '🔔', label: 'Notifications', type: 'switch', value: notifications, onChange: setNotifications },
+                { icon: '🌙', label: 'Dark Mode', type: 'switch', value: darkMode, onChange: setDarkMode },
+                { icon: '🔊', label: 'Sounds', type: 'switch', value: sounds, onChange: setSounds },
+                { icon: '📳', label: 'Haptic Feedback', type: 'switch', value: haptics, onChange: setHaptics },
+            ],
+        },
+        {
+            title: 'Study Settings',
+            items: [
+                { icon: '⏱️', label: 'Default Session', type: 'value', value: '25 min' },
+                { icon: '☕', label: 'Break Duration', type: 'value', value: '5 min' },
+                { icon: '🎯', label: 'Daily Goal', type: 'value', value: '4 hours' },
+            ],
+        },
+        {
+            title: 'About',
+            items: [
+                { icon: '📱', label: 'App Version', type: 'value', value: '1.0.0' },
+                { icon: '📄', label: 'Privacy Policy', type: 'link' },
+                { icon: '📋', label: 'Terms of Service', type: 'link' },
+            ],
+        },
+    ];
 
     return (
-        <SafeAreaView className="flex-1 bg-gray-100">
-            <StatusBar barStyle="dark-content" backgroundColor="#f3f4f6" />
+        <SafeAreaView style={styles.container}>
+            <StatusBar barStyle="light-content" backgroundColor="#0f172a" />
 
-            <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+            <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
                 {/* Header */}
-                <View className="flex-row items-center justify-between px-6 pt-4 pb-2">
-                    <View className="flex-row items-center">
-                        <TouchableOpacity
-                            onPress={() => navigation.goBack()}
-                            className="mr-3"
-                        >
-                            <Text className="text-gray-600 text-2xl">←</Text>
-                        </TouchableOpacity>
-                        <Text className="text-gray-900 text-2xl font-bold">Settings</Text>
+                <View style={styles.header}>
+                    <Text style={styles.title}>Settings</Text>
+                </View>
+
+                {/* Profile Card */}
+                <View style={styles.profileCard}>
+                    <View style={styles.avatar}>
+                        <Text style={styles.avatarText}>
+                            {user?.displayName?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || 'U'}
+                        </Text>
                     </View>
-
-                    {/* User avatar */}
-                    <View className="w-10 h-10 rounded-full bg-blue-100 items-center justify-center">
-                        <Text className="text-blue-600 font-semibold">{getInitials()}</Text>
+                    <View style={styles.profileInfo}>
+                        <Text style={styles.profileName}>{user?.displayName || 'Student'}</Text>
+                        <Text style={styles.profileEmail}>{user?.email}</Text>
                     </View>
                 </View>
 
-                {/* Account Section */}
-                <View className="px-6">
-                    <SectionHeader title="ACCOUNT" />
-                    <MenuItem
-                        icon="👤"
-                        iconBg="bg-blue-100"
-                        title="Profile & subjects"
-                        subtitle="Manage your details & courses"
-                        onPress={() => { }}
-                    />
-                </View>
-
-                {/* Preferences Section */}
-                <View className="px-6">
-                    <SectionHeader title="PREFERENCES" />
-
-                    <MenuItem
-                        icon="🔔"
-                        iconBg="bg-orange-100"
-                        title="Notifications & reminders"
-                        onPress={() => { }}
-                    />
-
-                    <MenuItem
-                        icon="🌙"
-                        iconBg="bg-gray-100"
-                        title="Dark mode"
-                        rightElement={
-                            <Switch
-                                value={isDarkMode}
-                                onValueChange={setIsDarkMode}
-                                trackColor={{ false: '#e5e7eb', true: '#3b82f6' }}
-                                thumbColor={isDarkMode ? '#fff' : '#fff'}
-                            />
-                        }
-                    />
-                </View>
-
-                {/* Data Section */}
-                <View className="px-6">
-                    <SectionHeader title="DATA" />
-
-                    <MenuItem
-                        icon="📄"
-                        iconBg="bg-red-100"
-                        title="Export schedule"
-                        subtitle="Download as PDF"
-                        onPress={handleExportPDF}
-                        rightElement={
-                            <Text className="text-gray-400 text-lg">⬇</Text>
-                        }
-                    />
-                </View>
+                {/* Setting Sections */}
+                {settingSections.map((section) => (
+                    <View key={section.title} style={styles.section}>
+                        <Text style={styles.sectionTitle}>{section.title}</Text>
+                        <View style={styles.sectionContent}>
+                            {section.items.map((item, index) => (
+                                <View
+                                    key={item.label}
+                                    style={[
+                                        styles.settingRow,
+                                        index < section.items.length - 1 && styles.settingRowBorder
+                                    ]}
+                                >
+                                    <Text style={styles.settingIcon}>{item.icon}</Text>
+                                    <Text style={styles.settingLabel}>{item.label}</Text>
+                                    {item.type === 'switch' && (
+                                        <Switch
+                                            value={item.value as boolean}
+                                            onValueChange={item.onChange as (value: boolean) => void}
+                                            trackColor={{ false: '#334155', true: '#4ade80' }}
+                                            thumbColor="#ffffff"
+                                        />
+                                    )}
+                                    {item.type === 'value' && (
+                                        <Text style={styles.settingValue}>{item.value}</Text>
+                                    )}
+                                    {item.type === 'link' && (
+                                        <Text style={styles.settingArrow}>→</Text>
+                                    )}
+                                </View>
+                            ))}
+                        </View>
+                    </View>
+                ))}
 
                 {/* Logout Button */}
-                <View className="px-6 mt-6">
-                    <TouchableOpacity
-                        className="bg-white rounded-2xl py-4 items-center border border-red-200"
-                        onPress={handleLogout}
-                        activeOpacity={0.7}
-                    >
-                        <View className="flex-row items-center">
-                            <Text className="text-red-500 mr-2">↪</Text>
-                            <Text className="text-red-500 font-semibold">Log out</Text>
-                        </View>
-                    </TouchableOpacity>
-                </View>
-
-                {/* Version info */}
-                <View className="items-center py-8">
-                    <Text className="text-gray-400 text-sm">
-                        StudyBuddy v1.0.4 • Build 2023
-                    </Text>
-                </View>
+                <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+                    <Text style={styles.logoutText}>🚪 Logout</Text>
+                </TouchableOpacity>
             </ScrollView>
         </SafeAreaView>
     );
 }
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        backgroundColor: '#0f172a',
+    },
+    scrollView: {
+        flex: 1,
+        paddingHorizontal: 20,
+    },
+    header: {
+        paddingTop: 20,
+        marginBottom: 24,
+    },
+    title: {
+        fontSize: 28,
+        fontWeight: 'bold',
+        color: '#ffffff',
+    },
+    profileCard: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#1e293b',
+        borderRadius: 16,
+        padding: 20,
+        marginBottom: 24,
+    },
+    avatar: {
+        width: 60,
+        height: 60,
+        borderRadius: 30,
+        backgroundColor: '#4ade80',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: 16,
+    },
+    avatarText: {
+        color: '#0f172a',
+        fontSize: 24,
+        fontWeight: 'bold',
+    },
+    profileInfo: {
+        flex: 1,
+    },
+    profileName: {
+        color: '#ffffff',
+        fontSize: 18,
+        fontWeight: '600',
+        marginBottom: 4,
+    },
+    profileEmail: {
+        color: '#94a3b8',
+        fontSize: 14,
+    },
+    section: {
+        marginBottom: 24,
+    },
+    sectionTitle: {
+        color: '#94a3b8',
+        fontSize: 14,
+        fontWeight: '600',
+        marginBottom: 12,
+        textTransform: 'uppercase',
+    },
+    sectionContent: {
+        backgroundColor: '#1e293b',
+        borderRadius: 12,
+        overflow: 'hidden',
+    },
+    settingRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 16,
+    },
+    settingRowBorder: {
+        borderBottomWidth: 1,
+        borderBottomColor: '#334155',
+    },
+    settingIcon: {
+        fontSize: 20,
+        marginRight: 12,
+    },
+    settingLabel: {
+        flex: 1,
+        color: '#ffffff',
+        fontSize: 16,
+    },
+    settingValue: {
+        color: '#94a3b8',
+        fontSize: 14,
+    },
+    settingArrow: {
+        color: '#94a3b8',
+        fontSize: 18,
+    },
+    logoutButton: {
+        backgroundColor: '#7f1d1d',
+        borderRadius: 12,
+        padding: 16,
+        alignItems: 'center',
+        marginBottom: 40,
+    },
+    logoutText: {
+        color: '#fca5a5',
+        fontSize: 16,
+        fontWeight: '600',
+    },
+});

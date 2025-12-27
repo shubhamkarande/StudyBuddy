@@ -1,12 +1,5 @@
 import React from 'react';
-import {
-    View,
-    Text,
-    TouchableOpacity,
-    Image,
-    StatusBar,
-    SafeAreaView,
-} from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, StatusBar } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../types';
@@ -17,79 +10,147 @@ export default function WelcomeScreen() {
     const navigation = useNavigation<NavigationProp>();
 
     return (
-        <SafeAreaView className="flex-1 bg-dark-900">
+        <SafeAreaView style={styles.container}>
             <StatusBar barStyle="light-content" backgroundColor="#0f172a" />
 
-            <View className="flex-1 px-6 pt-8">
-                {/* Step indicator */}
-                <View className="items-center mb-8">
-                    <Text className="text-dark-400 text-sm font-medium tracking-widest mb-2">
-                        STEP 1 OF 5
-                    </Text>
-                    <View className="flex-row space-x-2">
-                        <View className="w-8 h-1.5 rounded-full bg-primary-600" />
-                        <View className="w-2 h-1.5 rounded-full bg-dark-700" />
-                        <View className="w-2 h-1.5 rounded-full bg-dark-700" />
-                        <View className="w-2 h-1.5 rounded-full bg-dark-700" />
-                        <View className="w-2 h-1.5 rounded-full bg-dark-700" />
-                    </View>
+            <View style={styles.content}>
+                {/* Logo */}
+                <View style={styles.logoContainer}>
+                    <Text style={styles.emoji}>📚</Text>
+                    <Text style={styles.title}>StudyBuddy</Text>
+                    <Text style={styles.subtitle}>Your AI-Powered Study Companion</Text>
                 </View>
 
-                {/* Hero Image */}
-                <View className="items-center mb-10">
-                    <View className="w-80 h-64 rounded-2xl bg-dark-800 items-center justify-center overflow-hidden">
-                        {/* Placeholder for hero image - books, clock, calendar */}
-                        <View className="bg-emerald-600 w-full h-full items-center justify-center p-4">
-                            <Text className="text-6xl mb-2">📚</Text>
-                            <View className="flex-row space-x-4">
-                                <Text className="text-4xl">⏰</Text>
-                                <Text className="text-4xl">📅</Text>
-                            </View>
+                {/* Features */}
+                <View style={styles.features}>
+                    <View style={styles.feature}>
+                        <Text style={styles.featureIcon}>📅</Text>
+                        <View style={styles.featureText}>
+                            <Text style={styles.featureTitle}>Smart Planning</Text>
+                            <Text style={styles.featureDesc}>AI-generated study schedules</Text>
+                        </View>
+                    </View>
+                    <View style={styles.feature}>
+                        <Text style={styles.featureIcon}>🎯</Text>
+                        <View style={styles.featureText}>
+                            <Text style={styles.featureTitle}>Focus Mode</Text>
+                            <Text style={styles.featureDesc}>Pomodoro timer with ambient sounds</Text>
+                        </View>
+                    </View>
+                    <View style={styles.feature}>
+                        <Text style={styles.featureIcon}>📊</Text>
+                        <View style={styles.featureText}>
+                            <Text style={styles.featureTitle}>Track Progress</Text>
+                            <Text style={styles.featureDesc}>Visual analytics and streaks</Text>
                         </View>
                     </View>
                 </View>
 
-                {/* Tagline */}
-                <View className="items-center mb-6">
-                    <Text className="text-white text-4xl font-bold text-center mb-2">
-                        Focus. Plan.
-                    </Text>
-                    <Text className="text-primary-500 text-4xl font-bold text-center">
-                        Succeed.
-                    </Text>
+                {/* Buttons */}
+                <View style={styles.buttons}>
+                    <TouchableOpacity
+                        style={styles.primaryButton}
+                        onPress={() => navigation.navigate('Register')}
+                    >
+                        <Text style={styles.primaryButtonText}>Get Started</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                        style={styles.secondaryButton}
+                        onPress={() => navigation.navigate('Login')}
+                    >
+                        <Text style={styles.secondaryButtonText}>I already have an account</Text>
+                    </TouchableOpacity>
                 </View>
-
-                {/* Subtitle */}
-                <Text className="text-dark-400 text-center text-lg px-4 mb-auto">
-                    Master your schedule and crush your exams with the ultimate student planner.
-                </Text>
-            </View>
-
-            {/* Bottom section */}
-            <View className="px-6 pb-8">
-                {/* Get Started button */}
-                <TouchableOpacity
-                    className="bg-primary-600 rounded-2xl py-4 flex-row items-center justify-center mb-4"
-                    onPress={() => navigation.navigate('Register')}
-                    activeOpacity={0.8}
-                >
-                    <Text className="text-white text-lg font-semibold mr-2">
-                        Get Started
-                    </Text>
-                    <Text className="text-white text-lg">→</Text>
-                </TouchableOpacity>
-
-                {/* Login link */}
-                <TouchableOpacity
-                    className="py-2"
-                    onPress={() => navigation.navigate('Login')}
-                >
-                    <Text className="text-dark-400 text-center">
-                        Already have an account?{' '}
-                        <Text className="text-white font-semibold">Log in</Text>
-                    </Text>
-                </TouchableOpacity>
             </View>
         </SafeAreaView>
     );
 }
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        backgroundColor: '#0f172a',
+    },
+    content: {
+        flex: 1,
+        paddingHorizontal: 24,
+        paddingTop: 60,
+        paddingBottom: 40,
+    },
+    logoContainer: {
+        alignItems: 'center',
+        marginBottom: 48,
+    },
+    emoji: {
+        fontSize: 80,
+        marginBottom: 16,
+    },
+    title: {
+        fontSize: 36,
+        fontWeight: 'bold',
+        color: '#ffffff',
+        marginBottom: 8,
+    },
+    subtitle: {
+        fontSize: 16,
+        color: '#94a3b8',
+        textAlign: 'center',
+    },
+    features: {
+        flex: 1,
+        justifyContent: 'center',
+    },
+    feature: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#1e293b',
+        borderRadius: 16,
+        padding: 16,
+        marginBottom: 16,
+    },
+    featureIcon: {
+        fontSize: 32,
+        marginRight: 16,
+    },
+    featureText: {
+        flex: 1,
+    },
+    featureTitle: {
+        color: '#ffffff',
+        fontSize: 18,
+        fontWeight: '600',
+        marginBottom: 4,
+    },
+    featureDesc: {
+        color: '#94a3b8',
+        fontSize: 14,
+    },
+    buttons: {
+        marginTop: 32,
+    },
+    primaryButton: {
+        backgroundColor: '#4ade80',
+        borderRadius: 12,
+        paddingVertical: 16,
+        alignItems: 'center',
+        marginBottom: 16,
+    },
+    primaryButtonText: {
+        color: '#0f172a',
+        fontSize: 18,
+        fontWeight: 'bold',
+    },
+    secondaryButton: {
+        borderWidth: 1,
+        borderColor: '#4ade80',
+        borderRadius: 12,
+        paddingVertical: 16,
+        alignItems: 'center',
+    },
+    secondaryButtonText: {
+        color: '#4ade80',
+        fontSize: 16,
+        fontWeight: '600',
+    },
+});

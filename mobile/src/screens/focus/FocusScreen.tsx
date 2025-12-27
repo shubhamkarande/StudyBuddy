@@ -1,309 +1,298 @@
-import React, { useEffect, useRef, useState } from 'react';
-import {
-    View,
-    Text,
-    TouchableOpacity,
-    StatusBar,
-    SafeAreaView,
-    Vibration,
-    Modal,
-} from 'react-native';
-import { useAppDispatch, useAppSelector } from '../../store';
-import {
-    startFocus,
-    pauseFocus,
-    resumeFocus,
-    tick,
-    endFocus,
-} from '../../store/focusSlice';
-import { incrementStreak } from '../../store/streakSlice';
-
-// Format time as MM:SS
-const formatTime = (seconds: number): string => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-};
-
-// Circular progress ring component
-const CircularProgress = ({
-    progress,
-    size = 280,
-    children,
-}: {
-    progress: number;
-    size?: number;
-    children: React.ReactNode;
-}) => {
-    // Progress from 0 to 1
-    const strokeWidth = 6;
-    const center = size / 2;
-    const radius = center - strokeWidth;
-
-    return (
-        <View
-            className="items-center justify-center"
-            style={{ width: size, height: size }}
-        >
-            {/* Background circle */}
-            <View
-                className="absolute rounded-full"
-                style={{
-                    width: size,
-                    height: size,
-                    borderWidth: strokeWidth,
-                    borderColor: '#1e293b',
-                }}
-            />
-            {/* Progress circle - simplified representation */}
-            <View
-                className="absolute rounded-full"
-                style={{
-                    width: size,
-                    height: size,
-                    borderWidth: strokeWidth,
-                    borderColor: '#3b82f6',
-                    borderTopColor: progress > 0 ? '#3b82f6' : '#1e293b',
-                    borderRightColor: progress > 0.25 ? '#3b82f6' : '#1e293b',
-                    borderBottomColor: progress > 0.5 ? '#3b82f6' : '#1e293b',
-                    borderLeftColor: progress > 0.75 ? '#3b82f6' : '#1e293b',
-                    transform: [{ rotate: '-90deg' }],
-                }}
-            />
-            {/* Inner glow effect */}
-            <View
-                className="absolute rounded-full bg-blue-500/5"
-                style={{ width: size - 40, height: size - 40 }}
-            />
-            {/* Content */}
-            <View className="items-center justify-center">
-                {children}
-            </View>
-        </View>
-    );
-};
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, StatusBar, Animated } from 'react-native';
+import { useAppSelector, useAppDispatch } from '../../store';
+import { startTimer, pauseTimer, resetTimer, tick, setSessionMinutes } from '../../store/focusSlice';
 
 export default function FocusScreen() {
     const dispatch = useAppDispatch();
-    const { currentSession, isActive, isPaused, elapsedSeconds } = useAppSelector(state => state.focus);
-    const { todaySessions } = useAppSelector(state => state.planner);
-    const timerRef = useRef<NodeJS.Timeout | null>(null);
+    const { isRunning, isPaused, timeRemaining, sessionMinutes } = useAppSelector((state) => state.focus);
+    const [selectedSubject, setSelectedSubject] = useState('Mathematics');
+    const pulseAnim = useRef(new Animated.Value(1)).current;
 
-    // Session settings
-    const [targetMinutes, setTargetMinutes] = useState(25);
-    const [selectedSubject, setSelectedSubject] = useState('Physics');
-    const [sessionTitle, setSessionTitle] = useState('Quantum Mechanics Review');
-    const [currentSessionIndex, setCurrentSessionIndex] = useState(3);
-    const [totalSessions, setTotalSessions] = useState(4);
-    const [showAdjustModal, setShowAdjustModal] = useState(false);
-
-    // Duration presets
-    const durationPresets = [15, 25, 45, 60, 90];
-
-    // Start timer
     useEffect(() => {
-        if (isActive && !isPaused) {
-            timerRef.current = setInterval(() => {
+        let interval: ReturnType<typeof setInterval>;
+        if (isRunning && !isPaused && timeRemaining > 0) {
+            interval = setInterval(() => {
                 dispatch(tick());
             }, 1000);
-        } else if (timerRef.current) {
-            clearInterval(timerRef.current);
         }
+        return () => clearInterval(interval);
+    }, [isRunning, isPaused, timeRemaining, dispatch]);
 
-        return () => {
-            if (timerRef.current) {
-                clearInterval(timerRef.current);
-            }
-        };
-    }, [isActive, isPaused, dispatch]);
-
-    // Check if timer completed
     useEffect(() => {
-        if (currentSession && elapsedSeconds >= targetMinutes * 60) {
-            handleComplete();
+        if (isRunning && !isPaused) {
+            Animated.loop(
+                Animated.sequence([
+                    Animated.timing(pulseAnim, { toValue: 1.05, duration: 1000, useNativeDriver: true }),
+                    Animated.timing(pulseAnim, { toValue: 1, duration: 1000, useNativeDriver: true }),
+                ])
+            ).start();
+        } else {
+            pulseAnim.setValue(1);
         }
-    }, [elapsedSeconds, targetMinutes, currentSession]);
+    }, [isRunning, isPaused]);
 
-    const handleStart = () => {
-        Vibration.vibrate(100);
-        dispatch(startFocus({
-            sessionId: `focus_${Date.now()}`,
-            subject: selectedSubject,
-            startedAt: new Date().toISOString(),
-            targetMinutes,
-            elapsedSeconds: 0,
-            isActive: true,
-            isPaused: false,
-        }));
+    const formatTime = (seconds: number) => {
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
     };
 
-    const handlePause = () => {
-        Vibration.vibrate(50);
-        dispatch(isPaused ? resumeFocus() : pauseFocus());
-    };
+    const progress = 1 - (timeRemaining / (sessionMinutes * 60));
 
-    const handleComplete = () => {
-        Vibration.vibrate([100, 100, 100]);
-        dispatch(endFocus({ completed: true }));
-        dispatch(incrementStreak());
-    };
-
-    const handleCancel = () => {
-        if (timerRef.current) {
-            clearInterval(timerRef.current);
-        }
-        dispatch(endFocus({ completed: false }));
-    };
-
-    // Calculate progress
-    const targetSeconds = targetMinutes * 60;
-    const remainingSeconds = Math.max(0, targetSeconds - elapsedSeconds);
-    const progress = targetSeconds > 0 ? elapsedSeconds / targetSeconds : 0;
+    const subjects = ['Mathematics', 'Physics', 'Chemistry', 'Biology'];
+    const durations = [15, 25, 45, 60];
 
     return (
-        <SafeAreaView className="flex-1 bg-dark-900">
+        <SafeAreaView style={styles.container}>
             <StatusBar barStyle="light-content" backgroundColor="#0f172a" />
 
-            {/* Header */}
-            <View className="flex-row items-center justify-between px-6 pt-4">
-                <TouchableOpacity onPress={handleCancel} className="p-2">
-                    <Text className="text-white text-2xl">˅</Text>
-                </TouchableOpacity>
-                <Text className="text-dark-400 text-sm font-medium tracking-widest">
-                    FOCUS MODE
-                </Text>
-                <TouchableOpacity className="p-2">
-                    <Text className="text-dark-400">•••</Text>
-                </TouchableOpacity>
-            </View>
-
-            <View className="flex-1 items-center justify-center px-6">
-                {/* Subject badge */}
-                <View className="bg-dark-700 rounded-full px-4 py-2 flex-row items-center mb-4">
-                    <View className="w-3 h-3 rounded-sm bg-blue-500 mr-2" />
-                    <Text className="text-white font-medium">{selectedSubject}</Text>
+            <View style={styles.content}>
+                {/* Header */}
+                <View style={styles.header}>
+                    <Text style={styles.title}>Focus Mode</Text>
+                    <Text style={styles.subtitle}>Stay concentrated and productive</Text>
                 </View>
 
-                {/* Session title */}
-                <Text className="text-white text-2xl font-bold text-center mb-8">
-                    {sessionTitle}
-                </Text>
-
-                {/* Timer circle */}
-                <CircularProgress progress={progress} size={280}>
-                    <Text className="text-white text-7xl font-light font-mono">
-                        {formatTime(isActive ? remainingSeconds : targetMinutes * 60)}
-                    </Text>
-                    <Text className="text-dark-400 text-sm tracking-widest mt-2">
-                        MINUTES LEFT
-                    </Text>
-                </CircularProgress>
-            </View>
-
-            {/* Bottom controls */}
-            <View className="px-6 pb-8">
-                {/* Start/Pause/Resume button */}
-                {!isActive ? (
-                    <TouchableOpacity
-                        className="bg-blue-500 rounded-2xl py-4 flex-row items-center justify-center mb-8"
-                        onPress={handleStart}
-                        activeOpacity={0.8}
-                    >
-                        <Text className="text-white text-xl mr-2">▶</Text>
-                        <Text className="text-white text-lg font-semibold">Start Focus</Text>
-                    </TouchableOpacity>
-                ) : (
-                    <TouchableOpacity
-                        className={`rounded-2xl py-4 flex-row items-center justify-center mb-8 ${isPaused ? 'bg-blue-500' : 'bg-yellow-600'
-                            }`}
-                        onPress={handlePause}
-                        activeOpacity={0.8}
-                    >
-                        <Text className="text-white text-lg font-semibold">
-                            {isPaused ? '▶ Resume' : '⏸ Pause'}
-                        </Text>
-                    </TouchableOpacity>
-                )}
-
-                {/* Adjust and Sounds buttons */}
-                <View className="flex-row justify-center items-center mb-6">
-                    <TouchableOpacity
-                        className="items-center mx-8"
-                        onPress={() => setShowAdjustModal(true)}
-                    >
-                        <View className="w-12 h-12 rounded-full bg-dark-800 items-center justify-center mb-2">
-                            <Text className="text-xl">⏱</Text>
-                        </View>
-                        <Text className="text-dark-400 text-xs">ADJUST</Text>
-                    </TouchableOpacity>
-
-                    <View className="w-px h-8 bg-dark-700" />
-
-                    <TouchableOpacity className="items-center mx-8">
-                        <View className="w-12 h-12 rounded-full bg-dark-800 items-center justify-center mb-2">
-                            <Text className="text-xl">♪</Text>
-                        </View>
-                        <Text className="text-dark-400 text-xs">SOUNDS</Text>
-                    </TouchableOpacity>
-                </View>
-
-                {/* Session indicator */}
-                <View className="items-center">
-                    <Text className="text-dark-400 text-sm mb-2">
-                        SESSION {currentSessionIndex} OF {totalSessions}
-                    </Text>
-                    <View className="flex-row">
-                        {Array.from({ length: totalSessions }).map((_, i) => (
-                            <View
-                                key={i}
-                                className={`w-2 h-2 rounded-full mx-1 ${i < currentSessionIndex
-                                        ? 'bg-blue-500'
-                                        : i === currentSessionIndex
-                                            ? 'w-4 border-2 border-blue-500 bg-transparent'
-                                            : 'bg-dark-600'
-                                    }`}
-                            />
+                {/* Subject Selector */}
+                <View style={styles.subjectContainer}>
+                    <Text style={styles.sectionLabel}>Subject</Text>
+                    <View style={styles.subjectRow}>
+                        {subjects.map((subject) => (
+                            <TouchableOpacity
+                                key={subject}
+                                style={[
+                                    styles.subjectPill,
+                                    selectedSubject === subject && styles.subjectPillActive
+                                ]}
+                                onPress={() => setSelectedSubject(subject)}
+                            >
+                                <Text style={[
+                                    styles.subjectText,
+                                    selectedSubject === subject && styles.subjectTextActive
+                                ]}>{subject.substring(0, 4)}</Text>
+                            </TouchableOpacity>
                         ))}
                     </View>
                 </View>
-            </View>
 
-            {/* Adjust Modal */}
-            <Modal
-                visible={showAdjustModal}
-                transparent
-                animationType="slide"
-            >
-                <View className="flex-1 justify-end bg-black/50">
-                    <View className="bg-dark-800 rounded-t-3xl p-6">
-                        <Text className="text-white text-xl font-bold mb-4">Adjust Duration</Text>
-                        <View className="flex-row flex-wrap justify-center">
-                            {durationPresets.map((mins) => (
-                                <TouchableOpacity
-                                    key={mins}
-                                    className={`m-2 px-6 py-3 rounded-xl ${targetMinutes === mins ? 'bg-blue-500' : 'bg-dark-700'
-                                        }`}
-                                    onPress={() => {
-                                        setTargetMinutes(mins);
-                                        setShowAdjustModal(false);
-                                    }}
-                                >
-                                    <Text className={`font-medium ${targetMinutes === mins ? 'text-white' : 'text-dark-300'
-                                        }`}>
-                                        {mins} min
-                                    </Text>
-                                </TouchableOpacity>
-                            ))}
+                {/* Timer Circle */}
+                <Animated.View style={[styles.timerContainer, { transform: [{ scale: pulseAnim }] }]}>
+                    <View style={styles.timerOuter}>
+                        <View style={styles.timerInner}>
+                            <Text style={styles.timerText}>{formatTime(timeRemaining)}</Text>
+                            <Text style={styles.timerLabel}>
+                                {isRunning ? (isPaused ? 'Paused' : 'Focus Time') : 'Ready'}
+                            </Text>
                         </View>
-                        <TouchableOpacity
-                            className="mt-4 py-3 items-center"
-                            onPress={() => setShowAdjustModal(false)}
-                        >
-                            <Text className="text-dark-400">Cancel</Text>
-                        </TouchableOpacity>
+                    </View>
+                </Animated.View>
+
+                {/* Duration Selector */}
+                <View style={styles.durationContainer}>
+                    <Text style={styles.sectionLabel}>Duration (minutes)</Text>
+                    <View style={styles.durationRow}>
+                        {durations.map((dur) => (
+                            <TouchableOpacity
+                                key={dur}
+                                style={[
+                                    styles.durationButton,
+                                    sessionMinutes === dur && styles.durationButtonActive
+                                ]}
+                                onPress={() => dispatch(setSessionMinutes(dur))}
+                                disabled={isRunning}
+                            >
+                                <Text style={[
+                                    styles.durationText,
+                                    sessionMinutes === dur && styles.durationTextActive
+                                ]}>{dur}</Text>
+                            </TouchableOpacity>
+                        ))}
                     </View>
                 </View>
-            </Modal>
+
+                {/* Controls */}
+                <View style={styles.controls}>
+                    {!isRunning ? (
+                        <TouchableOpacity
+                            style={styles.startButton}
+                            onPress={() => dispatch(startTimer())}
+                        >
+                            <Text style={styles.startButtonText}>▶ Start Focus</Text>
+                        </TouchableOpacity>
+                    ) : (
+                        <View style={styles.controlRow}>
+                            <TouchableOpacity
+                                style={styles.pauseButton}
+                                onPress={() => dispatch(pauseTimer())}
+                            >
+                                <Text style={styles.pauseButtonText}>
+                                    {isPaused ? '▶ Resume' : '⏸ Pause'}
+                                </Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                style={styles.resetButton}
+                                onPress={() => dispatch(resetTimer())}
+                            >
+                                <Text style={styles.resetButtonText}>↻ Reset</Text>
+                            </TouchableOpacity>
+                        </View>
+                    )}
+                </View>
+            </View>
         </SafeAreaView>
     );
 }
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        backgroundColor: '#0f172a',
+    },
+    content: {
+        flex: 1,
+        paddingHorizontal: 24,
+        paddingTop: 20,
+    },
+    header: {
+        alignItems: 'center',
+        marginBottom: 24,
+    },
+    title: {
+        fontSize: 28,
+        fontWeight: 'bold',
+        color: '#ffffff',
+        marginBottom: 4,
+    },
+    subtitle: {
+        fontSize: 14,
+        color: '#94a3b8',
+    },
+    sectionLabel: {
+        color: '#94a3b8',
+        fontSize: 14,
+        marginBottom: 12,
+    },
+    subjectContainer: {
+        marginBottom: 24,
+    },
+    subjectRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+    },
+    subjectPill: {
+        paddingHorizontal: 16,
+        paddingVertical: 10,
+        backgroundColor: '#1e293b',
+        borderRadius: 20,
+    },
+    subjectPillActive: {
+        backgroundColor: '#4ade80',
+    },
+    subjectText: {
+        color: '#94a3b8',
+        fontSize: 14,
+        fontWeight: '600',
+    },
+    subjectTextActive: {
+        color: '#0f172a',
+    },
+    timerContainer: {
+        alignItems: 'center',
+        marginBottom: 32,
+    },
+    timerOuter: {
+        width: 220,
+        height: 220,
+        borderRadius: 110,
+        backgroundColor: '#1e293b',
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 4,
+        borderColor: '#4ade80',
+    },
+    timerInner: {
+        alignItems: 'center',
+    },
+    timerText: {
+        fontSize: 48,
+        fontWeight: 'bold',
+        color: '#ffffff',
+    },
+    timerLabel: {
+        fontSize: 16,
+        color: '#94a3b8',
+        marginTop: 8,
+    },
+    durationContainer: {
+        marginBottom: 32,
+    },
+    durationRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+    },
+    durationButton: {
+        flex: 1,
+        marginHorizontal: 4,
+        paddingVertical: 12,
+        backgroundColor: '#1e293b',
+        borderRadius: 12,
+        alignItems: 'center',
+    },
+    durationButtonActive: {
+        backgroundColor: '#4ade80',
+    },
+    durationText: {
+        color: '#94a3b8',
+        fontSize: 16,
+        fontWeight: '600',
+    },
+    durationTextActive: {
+        color: '#0f172a',
+    },
+    controls: {
+        flex: 1,
+        justifyContent: 'center',
+    },
+    startButton: {
+        backgroundColor: '#4ade80',
+        borderRadius: 16,
+        paddingVertical: 18,
+        alignItems: 'center',
+    },
+    startButtonText: {
+        color: '#0f172a',
+        fontSize: 20,
+        fontWeight: 'bold',
+    },
+    controlRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+    },
+    pauseButton: {
+        flex: 1,
+        backgroundColor: '#4ade80',
+        borderRadius: 12,
+        paddingVertical: 16,
+        alignItems: 'center',
+        marginRight: 8,
+    },
+    pauseButtonText: {
+        color: '#0f172a',
+        fontSize: 16,
+        fontWeight: 'bold',
+    },
+    resetButton: {
+        flex: 1,
+        backgroundColor: '#ef4444',
+        borderRadius: 12,
+        paddingVertical: 16,
+        alignItems: 'center',
+        marginLeft: 8,
+    },
+    resetButtonText: {
+        color: '#ffffff',
+        fontSize: 16,
+        fontWeight: 'bold',
+    },
+});

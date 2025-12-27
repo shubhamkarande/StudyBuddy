@@ -1,201 +1,231 @@
 import React from 'react';
-import {
-    View,
-    Text,
-    ScrollView,
-    TouchableOpacity,
-    StatusBar,
-    SafeAreaView,
-    Image,
-} from 'react-native';
-import { useAppSelector } from '../../store';
-
-// AI Chat bubble component
-const AIChatBubble = ({ message }: { message: string }) => {
-    return (
-        <View className="flex-row items-start mb-4">
-            {/* AI Avatar */}
-            <View className="w-10 h-10 rounded-full bg-dark-700 items-center justify-center mr-3">
-                <Text className="text-lg">🤖</Text>
-            </View>
-
-            <View className="flex-1">
-                {/* Name and time */}
-                <View className="flex-row items-center mb-2">
-                    <Text className="text-white font-semibold mr-2">StudyBuddy AI</Text>
-                    <Text className="text-dark-500 text-xs">Just now</Text>
-                </View>
-
-                {/* Message bubble */}
-                <View className="bg-dark-800 rounded-2xl rounded-tl-none p-4">
-                    <Text className="text-dark-300 leading-6">{message}</Text>
-                </View>
-            </View>
-        </View>
-    );
-};
-
-// Strength card component
-const StrengthCard = ({
-    subjects,
-    efficiency,
-    description
-}: {
-    subjects: string;
-    efficiency: number;
-    description: string;
-}) => {
-    return (
-        <View className="bg-gradient-to-r from-green-900/40 to-green-800/20 rounded-2xl p-4 mb-4 border border-green-700/30">
-            <View className="flex-row justify-between items-start mb-2">
-                <Text className="text-green-400 text-xs font-semibold">🏆 TOP STRENGTHS</Text>
-                <View className="bg-green-500/20 rounded-full px-2 py-1">
-                    <Text className="text-green-400 text-xs font-semibold">{efficiency}% Eff.</Text>
-                </View>
-            </View>
-            <View className="flex-row items-center">
-                <View className="flex-1">
-                    <Text className="text-white text-lg font-bold mb-1">{subjects}</Text>
-                    <Text className="text-dark-400 text-sm leading-5">{description}</Text>
-                </View>
-                <View className="w-16 h-16 rounded-full bg-green-500/20 items-center justify-center ml-3">
-                    <Text className="text-3xl">🧬</Text>
-                </View>
-            </View>
-        </View>
-    );
-};
-
-// Attention card component
-const AttentionCard = ({
-    subject,
-    description
-}: {
-    subject: string;
-    description: string;
-}) => {
-    return (
-        <View className="bg-gradient-to-r from-orange-900/40 to-orange-800/20 rounded-2xl p-4 mb-4 border border-orange-700/30">
-            <Text className="text-orange-400 text-xs font-semibold mb-2">⚠️ NEEDS ATTENTION</Text>
-            <View className="flex-row items-center">
-                <View className="flex-1">
-                    <Text className="text-white text-lg font-bold mb-1">{subject}</Text>
-                    <Text className="text-orange-300/80 text-sm leading-5">{description}</Text>
-                </View>
-                <View className="w-16 h-16 rounded-full bg-orange-500/20 items-center justify-center ml-3">
-                    <Text className="text-3xl">📐</Text>
-                </View>
-            </View>
-        </View>
-    );
-};
-
-// Improvement suggestion component
-const ImprovementItem = ({
-    suggestion,
-    checked = false
-}: {
-    suggestion: React.ReactNode;
-    checked?: boolean;
-}) => {
-    return (
-        <TouchableOpacity className="flex-row items-start py-3">
-            <View className={`w-5 h-5 rounded-full border-2 mr-3 items-center justify-center ${checked ? 'bg-blue-500 border-blue-500' : 'border-dark-500'
-                }`}>
-                {checked && <Text className="text-white text-xs">✓</Text>}
-            </View>
-            <View className="flex-1">
-                {suggestion}
-            </View>
-        </TouchableOpacity>
-    );
-};
+import { View, Text, ScrollView, StyleSheet, SafeAreaView, StatusBar } from 'react-native';
 
 export default function InsightsScreen() {
-    const { user } = useAppSelector(state => state.auth);
-    const userName = user?.displayName?.split(' ')[0] || 'Alex';
+    const insights = [
+        {
+            type: 'strength',
+            icon: '💪',
+            title: 'Strong in Mathematics',
+            description: 'You\'ve spent the most time on Math and show consistent improvement.',
+            color: '#22c55e',
+            bgColor: '#052e16',
+        },
+        {
+            type: 'attention',
+            icon: '⚠️',
+            title: 'Physics needs attention',
+            description: 'Your focus time in Physics has dropped 20% this week.',
+            color: '#f97316',
+            bgColor: '#422006',
+        },
+        {
+            type: 'tip',
+            icon: '💡',
+            title: 'Best study time: Morning',
+            description: 'Your focus scores are 30% higher during morning sessions.',
+            color: '#06b6d4',
+            bgColor: '#083344',
+        },
+    ];
 
-    // Current date range
-    const getDateRange = () => {
-        const now = new Date();
-        const start = new Date(now);
-        start.setDate(now.getDate() - 6);
-        const options: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric' };
-        return `${start.toLocaleDateString('en-US', options)} - ${now.toLocaleDateString('en-US', options)}`;
-    };
+    const suggestions = [
+        { icon: '📚', text: 'Review Physics: Mechanics chapter', priority: 'high' },
+        { icon: '⏰', text: 'Schedule 2 more Chemistry sessions', priority: 'medium' },
+        { icon: '🎯', text: 'Try a 45-min focus session today', priority: 'low' },
+    ];
 
     return (
-        <SafeAreaView className="flex-1 bg-dark-900">
+        <SafeAreaView style={styles.container}>
             <StatusBar barStyle="light-content" backgroundColor="#0f172a" />
 
-            <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+            <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
                 {/* Header */}
-                <View className="flex-row items-center justify-between px-6 pt-4 pb-2">
-                    <Text className="text-white text-2xl font-bold">Weekly Insights</Text>
-                    <TouchableOpacity className="bg-dark-800 rounded-full px-3 py-2 flex-row items-center">
-                        <Text className="text-lg mr-2">📅</Text>
-                        <Text className="text-white text-sm">{getDateRange()}</Text>
-                        <Text className="text-dark-400 ml-1">▼</Text>
-                    </TouchableOpacity>
+                <View style={styles.header}>
+                    <Text style={styles.title}>AI Insights</Text>
+                    <Text style={styles.subtitle}>Personalized recommendations for you</Text>
                 </View>
 
-                {/* AI Chat */}
-                <View className="px-6 mt-4">
-                    <AIChatBubble
-                        message={`Hi ${userName}! 👋 Here is your breakdown for the week. You've been remarkably consistent! You logged **24 hours** of focus time.`}
-                    />
-                </View>
-
-                {/* Strengths Card */}
-                <View className="px-6">
-                    <StrengthCard
-                        subjects="Biology & Chemistry"
-                        efficiency={90}
-                        description="These are your power zones this week! Your recall rate was exceptional."
-                    />
-                </View>
-
-                {/* Attention Card */}
-                <View className="px-6">
-                    <AttentionCard
-                        subject="Calculus"
-                        description="We noticed frequent breaks during Tuesday's session. It was a tricky topic!"
-                    />
-                </View>
-
-                {/* Suggested Improvements */}
-                <View className="mx-6 bg-dark-800 rounded-2xl p-4 mb-4">
-                    <View className="flex-row items-center mb-3">
-                        <Text className="text-xl mr-2">💡</Text>
-                        <Text className="text-white text-lg font-semibold">Suggested Improvements</Text>
+                {/* AI Message */}
+                <View style={styles.aiCard}>
+                    <View style={styles.aiHeader}>
+                        <Text style={styles.aiIcon}>🤖</Text>
+                        <Text style={styles.aiTitle}>StudyBuddy AI</Text>
                     </View>
-
-                    <ImprovementItem
-                        suggestion={
-                            <Text className="text-dark-300">
-                                Try the <Text className="text-blue-400">Pomodoro technique</Text> (25m work / 5m break) for Calculus next time.
-                            </Text>
-                        }
-                    />
-
-                    <View className="h-px bg-dark-700 my-1" />
-
-                    <ImprovementItem
-                        suggestion={
-                            <Text className="text-dark-300">
-                                Review your flashcards 10 minutes before sleeping to improve retention.
-                            </Text>
-                        }
-                    />
+                    <Text style={styles.aiMessage}>
+                        Great progress this week! You've completed 94% of your goals.
+                        I noticed you're most productive in the mornings - consider scheduling
+                        challenging subjects during that time.
+                    </Text>
                 </View>
 
-                {/* Motivational quote */}
-                <View className="px-6 py-6">
-                    <Text className="text-dark-500 text-center italic text-sm">
-                        "Success is the sum of small efforts, repeated day in and day out."
-                    </Text>
+                {/* Insights */}
+                <View style={styles.section}>
+                    <Text style={styles.sectionTitle}>Key Insights</Text>
+                    {insights.map((insight, index) => (
+                        <View
+                            key={index}
+                            style={[
+                                styles.insightCard,
+                                { backgroundColor: insight.bgColor, borderColor: insight.color }
+                            ]}
+                        >
+                            <Text style={styles.insightIcon}>{insight.icon}</Text>
+                            <View style={styles.insightContent}>
+                                <Text style={[styles.insightTitle, { color: insight.color }]}>
+                                    {insight.title}
+                                </Text>
+                                <Text style={styles.insightDesc}>{insight.description}</Text>
+                            </View>
+                        </View>
+                    ))}
+                </View>
+
+                {/* Suggestions */}
+                <View style={[styles.section, styles.lastSection]}>
+                    <Text style={styles.sectionTitle}>Suggested Actions</Text>
+                    {suggestions.map((suggestion, index) => (
+                        <View key={index} style={styles.suggestionCard}>
+                            <Text style={styles.suggestionIcon}>{suggestion.icon}</Text>
+                            <Text style={styles.suggestionText}>{suggestion.text}</Text>
+                            <View style={[
+                                styles.priorityBadge,
+                                suggestion.priority === 'high' && styles.priorityHigh,
+                                suggestion.priority === 'medium' && styles.priorityMedium,
+                                suggestion.priority === 'low' && styles.priorityLow,
+                            ]}>
+                                <Text style={styles.priorityText}>{suggestion.priority}</Text>
+                            </View>
+                        </View>
+                    ))}
                 </View>
             </ScrollView>
         </SafeAreaView>
     );
 }
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        backgroundColor: '#0f172a',
+    },
+    scrollView: {
+        flex: 1,
+        paddingHorizontal: 20,
+    },
+    header: {
+        paddingTop: 20,
+        marginBottom: 24,
+    },
+    title: {
+        fontSize: 28,
+        fontWeight: 'bold',
+        color: '#ffffff',
+        marginBottom: 4,
+    },
+    subtitle: {
+        fontSize: 14,
+        color: '#94a3b8',
+    },
+    aiCard: {
+        backgroundColor: '#1e293b',
+        borderRadius: 16,
+        padding: 20,
+        marginBottom: 24,
+        borderWidth: 1,
+        borderColor: '#4ade80',
+    },
+    aiHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 12,
+    },
+    aiIcon: {
+        fontSize: 24,
+        marginRight: 8,
+    },
+    aiTitle: {
+        color: '#4ade80',
+        fontSize: 16,
+        fontWeight: '600',
+    },
+    aiMessage: {
+        color: '#e2e8f0',
+        fontSize: 14,
+        lineHeight: 22,
+    },
+    section: {
+        marginBottom: 24,
+    },
+    lastSection: {
+        marginBottom: 40,
+    },
+    sectionTitle: {
+        color: '#ffffff',
+        fontSize: 18,
+        fontWeight: '600',
+        marginBottom: 16,
+    },
+    insightCard: {
+        flexDirection: 'row',
+        alignItems: 'flex-start',
+        borderRadius: 12,
+        padding: 16,
+        marginBottom: 12,
+        borderWidth: 1,
+    },
+    insightIcon: {
+        fontSize: 28,
+        marginRight: 12,
+    },
+    insightContent: {
+        flex: 1,
+    },
+    insightTitle: {
+        fontSize: 16,
+        fontWeight: '600',
+        marginBottom: 4,
+    },
+    insightDesc: {
+        color: '#94a3b8',
+        fontSize: 14,
+        lineHeight: 20,
+    },
+    suggestionCard: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#1e293b',
+        borderRadius: 12,
+        padding: 16,
+        marginBottom: 12,
+    },
+    suggestionIcon: {
+        fontSize: 24,
+        marginRight: 12,
+    },
+    suggestionText: {
+        flex: 1,
+        color: '#ffffff',
+        fontSize: 14,
+    },
+    priorityBadge: {
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: 8,
+    },
+    priorityHigh: {
+        backgroundColor: '#7f1d1d',
+    },
+    priorityMedium: {
+        backgroundColor: '#78350f',
+    },
+    priorityLow: {
+        backgroundColor: '#14532d',
+    },
+    priorityText: {
+        color: '#ffffff',
+        fontSize: 11,
+        fontWeight: '600',
+        textTransform: 'uppercase',
+    },
+});
